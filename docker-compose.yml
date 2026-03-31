@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: gdp-db
+    environment:
+      POSTGRES_DB: gdp_db
+      POSTGRES_USER: gdp_user
+      POSTGRES_PASSWORD: gdp_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - gdp-network
+
+volumes:
+  postgres_data:
+
+networks:
+  gdp-network:
+    driver: bridge
