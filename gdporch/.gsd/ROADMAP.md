@@ -18,27 +18,32 @@
 **Objective**: Establish repository, OpenAPI contracts, baseline Quarkus configuration, and DB Panache entities architecture.
 **Requirements**: REQ-01
 
-### Phase 2: Configuration & Validation Services
+### Phase 2: Odoo Tickets Generation
+**Status**: ⬜ Not Started
+**Objective**: Generate and formalize a comprehensive list of all Odoo tickets required to complete the project phases based on the SPEC and ROADMAP.
+**Requirements**: None
+
+### Phase 3: Configuration & Validation Services
 **Status**: ⬜ Not Started
 **Objective**: Establish core validation rules (F04, F07 requirements), parsing strategies (PDFBox, PDF naming rules), and expected date configuration calculators (F01, F05).
 **Requirements**: REQ-02, REQ-03
 
-### Phase 3: DB Integration & State Management
+### Phase 4: DB Integration & State Management
 **Status**: ⬜ Not Started
 **Objective**: Fully implement the F08 database persistence service for inserting/updating edition and page records based on validated models, along with base data lookup queries.
 **Requirements**: REQ-04
 
-### Phase 4: SFTP Integration & Polling Jobs
+### Phase 5: SFTP Integration & Polling Jobs
 **Status**: ⬜ Not Started
 **Objective**: Implement SFTP folder creation, periodic polling (F02, F03), historical polling (F06), and the orchestration linking them to validation and DB routines.
 **Requirements**: REQ-05, REQ-06
 
-### Phase 5: DAM Transmission Pipeline
+### Phase 6: DAM Transmission Pipeline
 **Status**: ⬜ Not Started
 **Objective**: Create XML (F09) generation conforming to the schema, package it alongside the PDF and TXT into a ZIP, and implement the cronjob to transmit to DAM LIBRA (F10).
 **Requirements**: REQ-07
 
-### Phase 6: Monitoring REST API Endpoints
+### Phase 7: Monitoring REST API Endpoints
 **Status**: ⬜ Not Started
 **Objective**: Expose all `/bo/**` operations for BFF consumption including acquisition listings, mail preparation/sending (F14, F22), and DAM status queue active integrations (F20, F21).
 **Requirements**: REQ-08

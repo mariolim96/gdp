@@ -1,0 +1,2180 @@
+openapi: 3.1.0
+info:
+  title: gdpbff — Backend For Frontend API
+  description: |
+    Single HTTP entry point for gdpbospa (Back Office) and gdpfospa (Front Office) SPAs.
+    System: GDP — Giornali del Piemonte. Client: Consiglio Regionale del Piemonte.
+    Plan Reference: Piano di Sviluppo 2025 — rif. 2025.CR.CC.01.
+    Version: 1.0 (March 2026). Status: Draft — under review.
+
+    ## Authentication
+    - `/bo/**` — requires `operatore` role (Shibboleth SSO → JWT)
+    - `/fo/**` — anonymous (`utenteWeb`) or `utentePrivilegiato` (IAM RUPAR → JWT)
+
+    ## Visibility Rule
+    For `utenteWeb`: editions with `DATA_PUBBLICAZIONE > CURRENT_DATE` are excluded
+    from all search results and edition listings (last-2-editions filter).
+  version: 1.0.0
+  contact:
+    name: CSI Piemonte — Team GDP
+  license:
+    name: Internal — CSI Piemonte
+
+servers:
+  - url: https://gdp.cr.piemonte.it/api
+    description: Production
+
+tags:
+  - name: bo-testate
+    description: Back Office — Testata Management (UC-02)
+  - name: bo-sftp-utenti
+    description: Back Office — SFTP User Management (UC-01)
+  - name: bo-acquisizioni
+    description: Back Office — Acquisition Monitoring (F12–F15)
+  - name: bo-pagine
+    description: Back Office — GDPR Right to Oblio
+  - name: fo-ricerca
+    description: Front Office — Archive Search (UC — Scenario 6)
+  - name: fo-testate
+    description: Front Office — Testata Catalogue
+  - name: fo-edizioni
+    description: Front Office — Editions
+  - name: fo-fascicoli
+    description: Front Office — Fascicoli (UC — Scenario 7)
+  - name: fo-preferiti
+    description: Front Office — Favourites (UC — Scenario 7)
+
+security:
+  - bearerAuth: []
+
+# ─────────────────────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────────────────────
+paths:
+
+  # ── BACK OFFICE — TESTATE ──────────────────────────────────
+
+  /bo/testate:
+    get:
+      tags: [bo-testate]
+      operationId: getBoTestate
+      summary: Filtered testata list
+      description: |
+        Returns list of testate with optional mutually-exclusive filters.
+        Delegates to `F16 — DB.getElencoTestate` on gdporch.
+        Only one filter parameter may be provided at a time.
+      security:
+        - bearerAuth: [operatore]
+      parameters:
+        - name: invioEdizione
+          in: query
+          description: Filter senders only (true=solo invianti)
+          schema:
+            type: boolean
+        - name: prov
+          in: query
+          description: Filter by province code (e.g. TO, CN)
+          schema:
+            type: string
+        - name: idTestata
+          in: query
+          description: Filter by specific testata ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestataSummaryList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bo/testate/{idTestata}:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+    get:
+      tags: [bo-testate]
+      operationId: getBoTestataById
+      summary: Complete anagrafica of a specific testata
+      description: Returns all GDP_TESTATA fields. Delegates to `F17 — DB.getTestata` on gdporch.
+      security:
+        - bearerAuth: [operatore]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestataDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    put:
+      tags: [bo-testate]
+      operationId: putBoTestata
+      summary: Update testata anagrafica
+      description: Update testata description, state, address, etc. Direct DB write via Panache.
+      security:
+        - bearerAuth: [operatore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestataDetail'
+      responses:
+        '200':
+          description: Updated testata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestataDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /bo/testate/{idTestata}/periodicita:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+    get:
+      tags: [bo-testate]
+      operationId: getBoPeriodicita
+      summary: Read testata periodicity configuration
+      description: Direct DB read from GDP_PERIODICITA.
+      security:
+        - bearerAuth: [operatore]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Periodicita'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [bo-testate]
+      operationId: putBoPeriodicita
+      summary: Update periodicity — triggers async date recalculation
+      description: |
+        Updates GDP_PERIODICITA then invokes `F01 — configDTEdizioneAttesa` on gdporch
+        asynchronously. Returns 202 with jobId for polling.
+      security:
+        - bearerAuth: [operatore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Periodicita'
+      responses:
+        '202':
+          description: Accepted — async processing started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncJobResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /bo/testate/{idTestata}/date-attese:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+    get:
+      tags: [bo-testate]
+      operationId: getBoDateAttese
+      summary: List expected dates for a period
+      description: Delegates to `F18 — FTPregolare.verifDateAttese` on gdporch.
+      security:
+        - bearerAuth: [operatore]
+      parameters:
+        - name: dataInizio
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: '2026-01-01'
+        - name: dataFine
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+            example: '2026-12-31'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DateAtteseList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      tags: [bo-testate]
+      operationId: postBoDateAttese
+      summary: Generate expected dates for a period
+      description: |
+        Invokes `F01 — configDTEdizioneAttesa` on gdporch asynchronously.
+        Returns 202 Accepted with jobId.
+      security:
+        - bearerAuth: [operatore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DateRangeRequest'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncJobResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /bo/testate/{idTestata}/sospensioni:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+    get:
+      tags: [bo-testate]
+      operationId: getBoSospensioni
+      summary: Expected dates with suspension status
+      description: Delegates to `F18 — verifDateAttese` on gdporch.
+      security:
+        - bearerAuth: [operatore]
+      parameters:
+        - name: dataInizio
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: dataFine
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DateAtteseList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      tags: [bo-testate]
+      operationId: postBoSospensioni
+      summary: Suspend editions for a period
+      description: |
+        Delegates to `F05 — sospensioneEdizioneAttesa` on gdporch (synchronous).
+        Returns number of suspended days.
+      security:
+        - bearerAuth: [operatore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DateRangeRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SospensioneResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── BACK OFFICE — SFTP UTENTI ──────────────────────────────
+
+  /bo/utenti-sftp:
+    get:
+      tags: [bo-sftp-utenti]
+      operationId: getBoUtentiSftp
+      summary: List SFTP users
+      security:
+        - bearerAuth: [operatore]
+      parameters:
+        - name: stato
+          in: query
+          schema:
+            type: string
+            enum: [attivo, sospeso]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UtenteSftpList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [bo-sftp-utenti]
+      operationId: postBoUtenteSftp
+      summary: Register new SFTP user
+      security:
+        - bearerAuth: [operatore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UtenteSftpRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UtenteSftp'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /bo/utenti-sftp/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    get:
+      tags: [bo-sftp-utenti]
+      operationId: getBoUtenteSftpById
+      summary: SFTP user detail
+      security:
+        - bearerAuth: [operatore]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UtenteSftp'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [bo-sftp-utenti]
+      operationId: putBoUtenteSftp
+      summary: Update SFTP user (role, status, password)
+      security:
+        - bearerAuth: [operatore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UtenteSftpRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UtenteSftp'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── BACK OFFICE — ACQUISIZIONI ─────────────────────────────
+
+  /bo/acquisizioni:
+    get:
+      tags: [bo-acquisizioni]
+      operationId: getBoAcquisizioni
+      summary: List acquisitions by date and type
+      description: Delegates to `F12 — MONITOR.elencoAcquisizioni` on gdporch.
+      security:
+        - bearerAuth: [operatore]
+      parameters:
+        - name: data
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: tipo
+          in: query
+          required: true
+          description: G=daily (giornaliera), S=historical (storica)
+          schema:
+            type: string
+            enum: [G, S]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcquisizioneList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bo/acquisizioni/ricerca:
+    get:
+      tags: [bo-acquisizioni]
+      operationId: getBoAcquisizioniRicerca
+      summary: Historical search of acquisitions (multi-criteria)
+      description: |
+        Historical search with multi-criteria filtering.
+        Delegates to `F15 — MONITOR.ricercaAcquisizioni` on gdporch.
+      security:
+        - bearerAuth: [operatore]
+      parameters:
+        - name: tipoAcquisizione
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [G, S]
+        - name: idTestata
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: dataDA
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dataA
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: tipoEdizione
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/TipoEdizione'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcquisizioneRicercaList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bo/acquisizioni/{idLog}:
+    parameters:
+      - $ref: '#/components/parameters/idLog'
+    get:
+      tags: [bo-acquisizioni]
+      operationId: getBoAcquisizioneDetail
+      summary: Acquisition detail
+      description: |
+        Pages OK/KO, edition type decoded, anomalies, XML/ZIP flags.
+        Delegates to `F13 — MONITOR.dettaglioAcquisizione` on gdporch.
+      security:
+        - bearerAuth: [operatore]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcquisizioneDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bo/acquisizioni/{idLog}/edizioni-storiche:
+    parameters:
+      - $ref: '#/components/parameters/idLog'
+    get:
+      tags: [bo-acquisizioni]
+      operationId: getBoAcquisizioneEdizioniStoriche
+      summary: Edition list for a historical delivery
+      description: |
+        Returns the list of editions contained in a historical delivery.
+        Delegates to `F13 — MONITOR.dettaglioAcquisizione` on gdporch.
+      security:
+        - bearerAuth: [operatore]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcquisizioneHistoricalEditionList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bo/acquisizioni/{idLog}/stato-dam:
+    parameters:
+      - $ref: '#/components/parameters/idLog'
+    get:
+      tags: [bo-acquisizioni]
+      operationId: getBoAcquisizioneStatoDam
+      summary: Check real-time DAM processing status
+      description: |
+        Checks the current status of the DAM import job associated with this acquisition.
+        Delegates to `F20 — MONITOR.statoDAM` on gdporch.
+      security:
+        - bearerAuth: [operatore]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DamStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bo/acquisizioni/{idLog}/mail/prepara:
+    parameters:
+      - $ref: '#/components/parameters/idLog'
+    post:
+      tags: [bo-acquisizioni]
+      operationId: postBoAcquisizioneMailPrepara
+      summary: Prepare mail notification for an anomalous acquisition
+      description: |
+        Composes the email payload (subject, body) using a template from DB.
+        Does NOT send the email. Delegates to `F14 — MONITOR.preparaMAIL`.
+      security:
+        - bearerAuth: [operatore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tipoMail]
+              properties:
+                tipoMail:
+                  type: string
+                  enum: [GW, GE, SW, SE, ST]
+                  description: |
+                    GW=Daily integration, GE=Daily error,
+                    SW=Historical integration, SE=Historical error,
+                    ST=Historical full delivery error.
+      responses:
+        '200':
+          description: Mail payload prepared
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailComposition'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bo/acquisizioni/{idLog}/mail/invia:
+    parameters:
+      - $ref: '#/components/parameters/idLog'
+    post:
+      tags: [bo-acquisizioni]
+      operationId: postBoAcquisizioneMailInvia
+      summary: Actually send the prepared mail
+      description: |
+        Sends the email using the payload provided (which may have been edited by the operator).
+        Delegates to `F22 — MONITOR.invioMAIL`.
+      security:
+        - bearerAuth: [operatore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailComposition'
+      responses:
+        '200':
+          description: Mail sent successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          description: Internal server error — mail send failed
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /bo/acquisizioni/{idLog}/retry:
+    parameters:
+      - $ref: '#/components/parameters/idLog'
+    post:
+      tags: [bo-acquisizioni]
+      operationId: postBoAcquisizioneRetry
+      summary: Re-enqueue edition for DAM retransmission
+      description: |
+        Increments retry count and sets transmission task to READY.
+        Enforces NRO_MAX_TENTATIVI limit.
+        Delegates to `F21 — MONITOR.attivaCODA` on gdporch.
+      security:
+        - bearerAuth: [operatore]
+      responses:
+        '202':
+          description: Accepted — edition re-enqueued
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict — maximum retry attempts exceeded
+
+  /bo/acquisizioni/{idLog}/file:
+    parameters:
+      - $ref: '#/components/parameters/idLog'
+    get:
+      tags: [bo-acquisizioni]
+      operationId: getBoAcquisizioneFile
+      summary: Download acquisition files (SHOULD)
+      description: Access SFTP directly via gdporch. Priority — SHOULD.
+      security:
+        - bearerAuth: [operatore]
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── BACK OFFICE — PAGINE / OBLIO ───────────────────────────
+
+  /bo/pagine/{idPagina}/oblio:
+    parameters:
+      - name: idPagina
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    post:
+      tags: [bo-pagine]
+      operationId: postBoOblio
+      summary: Initiate GDPR oblio on a page
+      description: |
+        Calls DAM LIBRA API to obscure page content, then sets
+        GDP_PAGINA.OBLIO=true, DATA_OBLIO=NOW(), NOTA_OBLIO.
+        operatore role only — 403 for utentePrivilegiato or utenteWeb.
+      security:
+        - bearerAuth: [operatore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OblioRequest'
+      responses:
+        '202':
+          description: Accepted — oblio process started
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    get:
+      tags: [bo-pagine]
+      operationId: getBoOblioStatus
+      summary: Check oblio status of a page
+      description: operatore role only.
+      security:
+        - bearerAuth: [operatore]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OblioStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── FRONT OFFICE — RICERCA ─────────────────────────────────
+
+  /fo/ricerca:
+    get:
+      tags: [fo-ricerca]
+      operationId: getFoRicerca
+      summary: Full-text archive search
+      description: |
+        Delegates to DAM LIBRA search API.
+        Applies last-2-editions filter for utenteWeb:
+        editions with DATA_PUBBLICAZIONE > CURRENT_DATE are excluded.
+        Performance target: p95 < 2s at 30 concurrent users.
+        NOTE: LIBRA search API not yet documented — OPEN-1.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search text
+          schema:
+            type: string
+            minLength: 1
+        - name: dataInizio
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dataFine
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: provincia
+          in: query
+          schema:
+            type: string
+        - name: idTestata
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: areaTematica
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RicercaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /fo/ricerca/avanzata:
+    get:
+      tags: [fo-ricerca]
+      operationId: getFoRicercaAvanzata
+      summary: Advanced archive search
+      description: |
+        Adds AND/OR/EXACT operator parameter over /fo/ricerca.
+        Same visibility rules apply.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: modalita
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [AND, OR, EXACT]
+        - name: dataInizio
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dataFine
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: provincia
+          in: query
+          schema:
+            type: string
+        - name: idTestata
+          in: query
+          schema:
+            type: integer
+            format: int64
+        - name: areaTematica
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RicercaResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── FRONT OFFICE — TESTATE ─────────────────────────────────
+
+  /fo/testate:
+    get:
+      tags: [fo-testate]
+      operationId: getFoTestate
+      summary: List consultable testate
+      description: Direct DB read from GDP_TESTATA.
+      parameters:
+        - name: provincia
+          in: query
+          schema:
+            type: string
+        - name: attive
+          in: query
+          schema:
+            type: boolean
+        - name: areaTematica
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestataSummaryList'
+
+  /fo/testate/{idTestata}:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+    get:
+      tags: [fo-testate]
+      operationId: getFoTestataById
+      summary: Public testata data
+      description: Returns only public fields (name, description, province, periodicity). NOT SFTP config.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestataPublic'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /fo/testate/{idTestata}/edizioni:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+    get:
+      tags: [fo-testate]
+      operationId: getFoEdizioniByTestata
+      summary: List editions of a testata
+      description: |
+        Direct DB read from GDP_EDIZIONE.
+        Applies last-2-editions filter for utenteWeb
+        (DATA_PUBBLICAZIONE > CURRENT_DATE excluded).
+      parameters:
+        - name: dataInizio
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: dataFine
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EdizioneList'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── FRONT OFFICE — EDIZIONI ────────────────────────────────
+
+  /fo/edizioni/{idEdizione}:
+    parameters:
+      - $ref: '#/components/parameters/idEdizione'
+    get:
+      tags: [fo-edizioni]
+      operationId: getFoEdizioneById
+      summary: Edition detail with page list and metadata
+      description: |
+        Direct DB read from GDP_EDIZIONE + GDP_PAGINA.
+        If utenteWeb and edition is within last 2 → 403.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EdizioneDetail'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /fo/edizioni/{idEdizione}/pagine/{numPagina}:
+    parameters:
+      - $ref: '#/components/parameters/idEdizione'
+      - name: numPagina
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      tags: [fo-edizioni]
+      operationId: getFoPaginaPdf
+      summary: PDF stream of a specific page
+      description: |
+        Retrieves PDF from DAM LIBRA and streams to client.
+        Uses chunked transfer encoding — no full in-memory buffering.
+      responses:
+        '200':
+          description: PDF page stream
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── FRONT OFFICE — FASCICOLI ───────────────────────────────
+
+  /fo/fascicoli:
+    get:
+      tags: [fo-fascicoli]
+      operationId: getFoFascicoli
+      summary: List user's fascicoli
+      description: utentePrivilegiato only. Reads from GDP_FASCICOLO filtered by user identity.
+      security:
+        - bearerAuth: [utentePrivilegiato]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FascicoloList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [fo-fascicoli]
+      operationId: postFoFascicolo
+      summary: Create a new fascicolo
+      description: |
+        Assembles PDF from individual LIBRA pages using Apache PDFBox 3.x.
+        - utenteWeb: PDF generated on-the-fly, not persisted. Returns base64 PDF.
+        - utentePrivilegiato: persisted to GDP_FASCICOLO. Returns idFascicolo.
+        Up to 50 pages: synchronous (201). More than 50: async (202 + jobId).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FascicoloRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FascicoloCreatedResponse'
+        '202':
+          description: Accepted — async assembly for large fascicoli
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncJobResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  /fo/fascicoli/{idFascicolo}:
+    parameters:
+      - $ref: '#/components/parameters/idFascicolo'
+    get:
+      tags: [fo-fascicoli]
+      operationId: getFoFascicoloById
+      summary: Retrieve an existing fascicolo
+      description: utentePrivilegiato only — 404 for utenteWeb.
+      security:
+        - bearerAuth: [utentePrivilegiato]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FascicoloDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [fo-fascicoli]
+      operationId: putFoFascicolo
+      summary: Add/remove pages from existing fascicolo (SHOULD)
+      description: |
+        utentePrivilegiato only.
+        PDF is regenerated at next download request.
+      security:
+        - bearerAuth: [utentePrivilegiato]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FascicoloUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FascicoloDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [fo-fascicoli]
+      operationId: deleteFoFascicolo
+      summary: Delete a fascicolo
+      description: utentePrivilegiato only.
+      security:
+        - bearerAuth: [utentePrivilegiato]
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /fo/fascicoli/{idFascicolo}/pdf:
+    parameters:
+      - $ref: '#/components/parameters/idFascicolo'
+    get:
+      tags: [fo-fascicoli]
+      operationId: getFoFascicoloPdf
+      summary: Download fascicolo PDF
+      description: |
+        - utentePrivilegiato: serves saved PDF.
+        - utenteWeb: generates PDF on-the-fly (page assembly).
+      responses:
+        '200':
+          description: PDF stream
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+
+  # ── FRONT OFFICE — PREFERITI ───────────────────────────────
+
+  /fo/preferiti:
+    get:
+      tags: [fo-preferiti]
+      operationId: getFoPreferiti
+      summary: List user's favourite testate and editions
+      description: utentePrivilegiato only.
+      security:
+        - bearerAuth: [utentePrivilegiato]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferitiList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [fo-preferiti]
+      operationId: postFoPreferito
+      summary: Add a testata or edition to favourites (SHOULD)
+      security:
+        - bearerAuth: [utentePrivilegiato]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreferitoRequest'
+      responses:
+        '201':
+          description: Created
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /fo/preferiti/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    delete:
+      tags: [fo-preferiti]
+      operationId: deleteFoPreferito
+      summary: Remove item from favourites (SHOULD)
+      security:
+        - bearerAuth: [utentePrivilegiato]
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+# ─────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT issued by Shibboleth SSO (operatore) or IAM RUPAR (utentePrivilegiato).
+        Validated by SmallRye JWT. Roles extracted from JWT claims.
+
+  parameters:
+    idTestata:
+      name: idTestata
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    idLog:
+      name: idLog
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    idEdizione:
+      name: idEdizione
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    idFascicolo:
+      name: idFascicolo
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Authenticated but insufficient role
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServiceUnavailable:
+      description: Backend system unavailable (gdporch or DAM LIBRA)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    # ── ERROR ────────────────────────────────────────────────
+    ErrorResponse:
+      type: object
+      required: [codice, messaggio, timestamp]
+      properties:
+        codice:
+          type: string
+          enum:
+            - BACKEND_UNAVAILABLE
+            - VALIDATION_ERROR
+            - NOT_FOUND
+            - FORBIDDEN
+            - INTERNAL_ERROR
+          example: VALIDATION_ERROR
+        messaggio:
+          type: string
+          example: Parametro obbligatorio mancante
+        dettagli:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+        timestamp:
+          type: string
+          format: date-time
+          example: '2026-03-01T10:00:00Z'
+
+    ErrorDetail:
+      type: object
+      properties:
+        campo:
+          type: string
+          example: dataInizio
+        errore:
+          type: string
+          example: Il campo è obbligatorio
+
+    # ── ASYNC JOB ────────────────────────────────────────────
+    AsyncJobResponse:
+      type: object
+      required: [jobId, status]
+      properties:
+        jobId:
+          type: string
+          example: 'a3f2c1d0-1234-5678-abcd-ef0123456789'
+        message:
+          type: string
+          example: Processing started
+        status:
+          type: string
+          enum: [PROCESSING, COMPLETED, FAILED]
+          example: PROCESSING
+
+    # ── DATE RANGE ───────────────────────────────────────────
+    DateRangeRequest:
+      type: object
+      required: [dataInizio, dataFine]
+      properties:
+        dataInizio:
+          type: string
+          format: date
+          example: '2026-01-01'
+        dataFine:
+          type: string
+          format: date
+          example: '2026-12-31'
+
+    # ── TESTATE ──────────────────────────────────────────────
+    TestataSummary:
+      type: object
+      required: [idTestata, nomeTestata, cartellaTestata]
+      properties:
+        idTestata:
+          type: integer
+          format: int64
+          example: 1
+        nomeTestata:
+          type: string
+          example: La Sentinella del Canavese
+        cartellaTestata:
+          type: string
+          example: sentinella
+        invioEdizione:
+          type: boolean
+          example: true
+        provincia:
+          type: string
+          example: TO
+
+    TestataSummaryList:
+      type: object
+      required: [testate]
+      properties:
+        testate:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestataSummary'
+
+    TestataDetail:
+      type: object
+      required: [idTestata, nomeTestata]
+      properties:
+        idTestata:
+          type: integer
+          format: int64
+          example: 1
+        nomeTestata:
+          type: string
+          example: La Sentinella del Canavese
+        cartellaTestata:
+          type: string
+        stato:
+          type: string
+        cancellazione:
+          type: string
+        codToma:
+          type: string
+        codEditrice:
+          type: string
+        annoFondazione:
+          type: integer
+        periodoDal:
+          type: string
+        periodoAl:
+          type: string
+        sitoWeb:
+          type: string
+          format: uri
+        entePropietario:
+          type: string
+        invioEdizioni:
+          type: boolean
+        comune:
+          type: string
+        indirizzo:
+          type: string
+        latitudine:
+          type: number
+          format: double
+        longitudine:
+          type: number
+          format: double
+        provincia:
+          type: string
+
+    TestataPublic:
+      type: object
+      required: [idTestata, nomeTestata]
+      description: Public fields only — no SFTP or internal configuration data.
+      properties:
+        idTestata:
+          type: integer
+          format: int64
+        nomeTestata:
+          type: string
+        provincia:
+          type: string
+        comune:
+          type: string
+        sitoWeb:
+          type: string
+          format: uri
+        entePropietario:
+          type: string
+        annoFondazione:
+          type: integer
+        periodoDal:
+          type: string
+        periodoAl:
+          type: string
+        stato:
+          type: string
+
+    # ── PERIODICITA ──────────────────────────────────────────
+    Periodicita:
+      type: object
+      required: [idPeriodicita, idTestata]
+      properties:
+        idPeriodicita:
+          type: integer
+          format: int64
+          example: 1
+        idTestata:
+          type: integer
+          format: int64
+          example: 1
+        mensilita:
+          type: number
+          format: double
+          example: 0.5
+          description: Monthly interval (0 = sub-monthly weekly pattern)
+        ggPeriodicita:
+          type: string
+          example: 'G01;G15'
+          description: |
+            Publication day pattern.
+            Monthly: G01, G15, G1S6 (first Saturday), etc.
+            Sub-monthly: 1WS0 (daily), 1WS3 (every Wednesday), 2WS7 (every other Sunday), etc.
+        inizioSospensione:
+          type: string
+          format: date
+          example: '2026-01-01'
+        fineSospensione:
+          type: string
+          format: date
+          example: '2026-01-31'
+
+    # ── DATE ATTESE ──────────────────────────────────────────
+    DataAttesa:
+      type: object
+      required: [data, sospesa]
+      properties:
+        data:
+          type: string
+          format: date
+          example: '2026-03-01'
+        sospesa:
+          type: boolean
+          example: false
+
+    DateAttesePerTestata:
+      type: object
+      required: [idTestata, cartellaTestata]
+      properties:
+        idTestata:
+          type: integer
+          format: int64
+        cartellaTestata:
+          type: string
+          description: Added in SFU-01 v2
+        dateAttese:
+          type: array
+          items:
+            $ref: '#/components/schemas/DataAttesa'
+        nroEdizioniAttese:
+          type: integer
+
+    DateAtteseList:
+      type: object
+      required: [testate]
+      properties:
+        testate:
+          type: array
+          items:
+            $ref: '#/components/schemas/DateAttesePerTestata'
+
+    SospensioneResponse:
+      type: object
+      required: [giorniSospesi, message]
+      properties:
+        giorniSospesi:
+          type: integer
+          example: 5
+        message:
+          type: string
+          example: Editions suspended successfully
+
+    # ── UTENTI SFTP ──────────────────────────────────────────
+    UtenteSftp:
+      type: object
+      required: [id, idTestata, username, ruolo, stato]
+      properties:
+        id:
+          type: integer
+          format: int64
+        idTestata:
+          type: integer
+          format: int64
+        username:
+          type: string
+        homeFtp:
+          type: string
+        referenteFtp:
+          type: string
+        email:
+          type: string
+          format: email
+        ruolo:
+          type: string
+          enum: [utenteFTP, utenteWEB]
+        stato:
+          type: string
+          enum: [attivo, sospeso]
+
+    UtenteSftpRequest:
+      type: object
+      required: [idTestata, username, password, ruolo, stato]
+      properties:
+        idTestata:
+          type: integer
+          format: int64
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        password:
+          type: string
+          minLength: 8
+          writeOnly: true
+        homeFtp:
+          type: string
+        referenteFtp:
+          type: string
+        email:
+          type: string
+          format: email
+        ruolo:
+          type: string
+          enum: [utenteFTP, utenteWEB]
+        stato:
+          type: string
+          enum: [attivo, sospeso]
+
+    UtenteSftpList:
+      type: object
+      required: [utenti]
+      properties:
+        utenti:
+          type: array
+          items:
+            $ref: '#/components/schemas/UtenteSftp'
+
+    # ── ACQUISIZIONI ─────────────────────────────────────────
+    AcquisizioneSummary:
+      type: object
+      required: [idLog]
+      properties:
+        idLog:
+          type: integer
+          format: int64
+        idUtenteSFTP:
+          type: integer
+          format: int64
+        idTestata:
+          type: integer
+          format: int64
+        nomeTestata:
+          type: string
+          example: La Sentinella del Canavese
+        nroEdizioni:
+          type: integer
+          description: Always 1 for tipo=G; count of GDP_LOG_EDIZIONE for tipo=S
+        tipoEdizione:
+          type: string
+          description: Human-readable description from GDP_TIPO_EDIZIONE.
+          example: Regolare
+        dataEdizione:
+          type: string
+          format: date
+        dataAcquisizione:
+          type: string
+          format: date-time
+        nroTotFile:
+          type: integer
+        esito:
+          type: string
+          example: "<MSG>Elaborazione OK</MSG>"
+          description: |
+            Raw status string containing rendering tags mapping to UC-05:
+            <MSG> = OK (white text, green background)
+            <WRN> = Warning (blue text, yellow background)
+            <Ennn> = Error (yellow text, red background)
+
+    AcquisizioneList:
+      type: object
+      required: [acquisizioni]
+      properties:
+        acquisizioni:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcquisizioneSummary'
+
+    TipoEdizione:
+      type: string
+      enum: [OK, AN, PO, SO, AA, ST, AS]
+      description: |
+        OK=Regolare (Corrispondente), AN=Anticipataria, PO=Posticipataria,
+        SO=Sospesa, AA=Anomala edizione attesa, ST=Storica, AS=Anomala storica
+
+    AcquisizioneRicercaSummary:
+      type: object
+      required: [idLog, idTestata, nomeTestata, tipoEdizione, dataEdizione, dataAcquisizione]
+      properties:
+        idLog:
+          type: integer
+          format: int64
+        idTestata:
+          type: integer
+          format: int64
+        nomeTestata:
+          type: string
+        tipoEdizione:
+          $ref: '#/components/schemas/TipoEdizione'
+        dataEdizione:
+          type: string
+          format: date
+        dataAcquisizione:
+          type: string
+          format: date-time
+        nroTotFileAcq:
+          type: integer
+          description: Total files acquired (Schema result column)
+        nroTotFileVal:
+          type: integer
+          description: Total files valid (Schema result column)
+
+    AcquisizioneRicercaList:
+      type: object
+      required: [acquisizioni]
+      properties:
+        acquisizioni:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcquisizioneRicercaSummary'
+
+    AcquisizioneDetail:
+      type: object
+      required: [idLog]
+      properties:
+        idLog:
+          type: integer
+          format: int64
+        idTestata:
+          type: integer
+          format: int64
+        nomeTestata:
+          type: string
+          example: La Sentinella del Canavese
+        dataEdizione:
+          type: string
+          format: date
+        tipoEdizione:
+          type: string
+          description: Human-readable description decoded via GDP_TIPO_EDIZIONE.
+          example: Regolare
+        tipoAcquisizione:
+          type: string
+          enum: [G, S]
+          description: G=Giornaliera, S=Storica
+        dataAcquisizione:
+          type: string
+          format: date-time
+        nroTotFile:
+          type: integer
+        esito:
+          type: string
+          example: "<WRN>Avviso: NL – page003.pdf</WRN>"
+          description: Raw status string with rendering tags.
+        tipoEdizioneCode:
+          $ref: '#/components/schemas/TipoEdizione'
+        idEdizione:
+          type: integer
+          format: int64
+        primaPagina:
+          type: string
+          enum: [SI, NO]
+        fileXML:
+          type: string
+          enum: ['true', 'false']
+        fileZIP:
+          type: string
+          enum: ['true', 'false']
+        nroPagAcq:
+          type: integer
+        nroPagOK:
+          type: integer
+        nroPagErrate:
+          type: integer
+        jobId:
+          type: string
+          description: DAM Libra Job ID
+        descrizione:
+          type: string
+          example: 'NL – page003.pdf'
+
+    AcquisizioneHistoricalEdition:
+      type: object
+      properties:
+        nomeTestata:
+          type: string
+        dataEdizione:
+          type: string
+          format: date
+        tipoEdizione:
+          type: string
+        nroPagAcq:
+          type: integer
+        nroPagOK:
+          type: integer
+        nroPagErrate:
+          type: integer
+        esito:
+          type: string
+          description: Raw status string with rendering tags.
+
+    AcquisizioneHistoricalEditionList:
+      type: object
+      required: [edizioni]
+      properties:
+        edizioni:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcquisizioneHistoricalEdition'
+
+    MailComposition:
+      type: object
+      required: [from, to, host, porta, oggetto, testo]
+      properties:
+        from:
+          type: string
+          format: email
+          example: gdp@csipiemonte.it
+        to:
+          type: string
+          format: email
+          example: editore@testata.it
+        host:
+          type: string
+          example: mail.csipiemonte.it
+        porta:
+          type: integer
+          example: 587
+        oggetto:
+          type: string
+          example: Edizione del 01/03/2026 - La Sentinella del Canavese
+        testo:
+          type: string
+          example: Gentile editore, si segnala un'anomalia...
+
+    DamStatusResponse:
+      type: object
+      required: [jobId, status]
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+          enum: [SUBMITTED, PROCESSING, COMPLETED, FAILED]
+
+    # ── OBLIO ────────────────────────────────────────────────
+    OblioRequest:
+      type: object
+      required: [notaOblio]
+      properties:
+        notaOblio:
+          type: string
+          minLength: 1
+          maxLength: 500
+          example: Requested by CRP on 2026-02-15
+
+    OblioStatus:
+      type: object
+      required: [idPagina, oblio]
+      properties:
+        idPagina:
+          type: integer
+          format: int64
+        oblio:
+          type: boolean
+        dataOblio:
+          type: string
+          format: date-time
+        notaOblio:
+          type: string
+
+    # ── SEARCH / RICERCA ─────────────────────────────────────
+    RisultatoRicerca:
+      type: object
+      properties:
+        idPagina:
+          type: integer
+          format: int64
+        idEdizione:
+          type: integer
+          format: int64
+        idTestata:
+          type: integer
+          format: int64
+        nomeTestata:
+          type: string
+        dataEdizione:
+          type: string
+          format: date
+        numPagina:
+          type: integer
+        excerpt:
+          type: string
+          example: '...matched text snippet...'
+        thumbnail:
+          type: string
+          format: uri
+
+    RicercaResponse:
+      type: object
+      required: [risultati, totale, pagina, dimensione]
+      properties:
+        risultati:
+          type: array
+          items:
+            $ref: '#/components/schemas/RisultatoRicerca'
+        totale:
+          type: integer
+          example: 150
+        pagina:
+          type: integer
+          example: 0
+        dimensione:
+          type: integer
+          example: 20
+
+    # ── EDIZIONI ─────────────────────────────────────────────
+    EdizioneSummary:
+      type: object
+      required: [idEdizione, dataEdizione]
+      properties:
+        idEdizione:
+          type: integer
+          format: int64
+        dataEdizione:
+          type: string
+          format: date
+        dataPubblicazione:
+          type: string
+          format: date
+        numeroPagine:
+          type: integer
+        stato:
+          type: integer
+          example: 0
+
+    EdizioneList:
+      type: object
+      required: [edizioni, totale, pagina, dimensione]
+      properties:
+        edizioni:
+          type: array
+          items:
+            $ref: '#/components/schemas/EdizioneSummary'
+        totale:
+          type: integer
+        pagina:
+          type: integer
+        dimensione:
+          type: integer
+
+    PaginaSummary:
+      type: object
+      required: [idPagina, numPagina]
+      properties:
+        idPagina:
+          type: integer
+          format: int64
+        numPagina:
+          type: integer
+        filePdf:
+          type: string
+        stato:
+          type: integer
+        oblio:
+          type: boolean
+
+    EdizioneDetail:
+      allOf:
+        - $ref: '#/components/schemas/EdizioneSummary'
+        - type: object
+          properties:
+            idTestata:
+              type: integer
+              format: int64
+            nomeTestata:
+              type: string
+            pagine:
+              type: array
+              items:
+                $ref: '#/components/schemas/PaginaSummary'
+
+    # ── FASCICOLI ────────────────────────────────────────────
+    FascicoloRequest:
+      type: object
+      required: [pagine]
+      properties:
+        pagine:
+          type: array
+          items:
+            type: integer
+            format: int64
+          minItems: 1
+          maxItems: 500
+          example: [1, 2, 3, 15, 16]
+
+    FascicoloCreatedResponse:
+      type: object
+      description: |
+        For utenteWeb: pdf field present, temporaneo=true.
+        For utentePrivilegiato: idFascicolo present, temporaneo=false.
+      properties:
+        idFascicolo:
+          type: integer
+          format: int64
+          example: 42
+        temporaneo:
+          type: boolean
+          example: false
+        creazione:
+          type: string
+          format: date-time
+        pdf:
+          type: string
+          format: byte
+          description: Base64-encoded PDF (utenteWeb only)
+
+    FascicoloUpdateRequest:
+      type: object
+      properties:
+        aggiungi:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example: [17, 18]
+        rimuovi:
+          type: array
+          items:
+            type: integer
+            format: int64
+          example: [3]
+
+    FascicoloDetail:
+      type: object
+      required: [idFascicolo]
+      properties:
+        idFascicolo:
+          type: integer
+          format: int64
+        creazione:
+          type: string
+          format: date-time
+        pagine:
+          type: array
+          items:
+            type: integer
+            format: int64
+
+    FascicoloList:
+      type: object
+      required: [fascicoli]
+      properties:
+        fascicoli:
+          type: array
+          items:
+            $ref: '#/components/schemas/FascicoloDetail'
+
+    # ── PREFERITI ────────────────────────────────────────────
+    PreferitoRequest:
+      type: object
+      required: [tipo, idRiferimento]
+      properties:
+        tipo:
+          type: string
+          enum: [testata, edizione]
+        idRiferimento:
+          type: integer
+          format: int64
+          example: 42
+
+    Preferito:
+      type: object
+      required: [id, tipo, idRiferimento]
+      properties:
+        id:
+          type: integer
+          format: int64
+        tipo:
+          type: string
+          enum: [testata, edizione]
+        idRiferimento:
+          type: integer
+          format: int64
+        nomeRiferimento:
+          type: string
+
+    PreferitiList:
+      type: object
+      required: [preferiti]
+      properties:
+        preferiti:
+          type: array
+          items:
+            $ref: '#/components/schemas/Preferito'
