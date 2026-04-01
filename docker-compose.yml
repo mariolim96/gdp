@@ -10,7 +10,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/scripts:/docker-entrypoint-initdb.d
+      - ./db/scripts/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./db/scripts/populate_db.sql:/docker-entrypoint-initdb.d/02_populate_db.sql
     networks:
       - gdp-network
 
