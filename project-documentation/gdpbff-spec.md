@@ -169,7 +169,7 @@ All Back Office APIs require authentication with role `operatore`. The `/bo/` pr
   "periodoAl": "string",
   "sitoWeb": "string",
   "entePropietario": "string",
-  "invioEdizioni": true,
+  "invioEdizione": true,
   "comune": "string",
   "indirizzo": "string",
   "latitudine": 0.0,
@@ -195,12 +195,14 @@ All Back Office APIs require authentication with role `operatore`. The `/bo/` pr
 {
   "idPeriodicita": 1,
   "idTestata": 1,
-  "mensilita": 0.5,
+  "mensilita": 1,
   "ggPeriodicita": "G01;G15",
   "inizioSospensione": "2026-01-01",
   "fineSospensione": "2026-01-31"
 }
 ```
+
+> **Note:** `mensilita` is **integer** (DB: `GDP_PERIODICITA.MENSILITA integer`). Values: 0=sub-monthly, 1=monthly, 2=bimonthly, 3=quarterly, 4=every 4 months, 6=semi-annual, 12=annual. Twice-monthly publications use `mensilita=1` with two dates in `ggPeriodicita` (e.g. `"G01;G15"`).
 
 ---
 
@@ -385,11 +387,11 @@ Based on the `esito` tag, the SPA applies these behaviors:
 | Tag in `esito` | Color | "in CODA" button | "MAIL" button | `tipoMail` set to |
 |----------------|-------|-----------------|---------------|-------------------|
 | `<MSG>` (daily) | green | **disabled** | **disabled** | — |
-| `<WRN>` (daily) | yellow | active | active | `"GW"` |
-| `<Ennn>` (daily) | red | active | active | `"GE"` |
+| `<WRN>` (daily) | yellow | active | active | `"GW001"` |
+| `<Ennn>` (daily) | red | active | active | `"GE001"` |
 | `<MSG>` (storico) | green | **disabled** | **disabled** | — |
-| `<WRN>` (storico) | yellow | active | active | `"SW"` |
-| `<Ennn>` (storico) | red | active | active | `"SE"` |
+| `<WRN>` (storico) | yellow | active | active | `"SW001"` |
+| `<Ennn>` (storico) | red | active | active | `"SE001"` |
 
 > **`tipoMail` values** — this string is passed as parameter to `F14 — preparaMAIL` to select the correct email template from `GDP_MAIL`. The BFF must derive `tipoMail` from the `tipoAcquisizione` and `esito` tag, and include it in the response or compute it client-side. Recommended approach: expose `tipoAcquisizione` and raw `esito` tag, let gdpbospa compute `tipoMail`.
 
@@ -455,7 +457,7 @@ Based on the `esito` tag, the SPA applies these behaviors:
 | Totale pag Acquisite | `nroPagAcq` | As-is |
 | Totale pag Valide | `nroPagOK` | As-is |
 | Totale pag Errate | `nroPagErrate` | As-is |
-| Esito | `esito` | Tag-based coloring; `<Ennn>` sets `tipoMail="ST"` |
+| Esito | `esito` | Tag-based coloring; `<Ennn>` sets `tipoMail="ST001"` |
 
 **Additional `tipoMail` rule for historical editions (Algoritmo 5):**
 
@@ -463,7 +465,7 @@ Based on the `esito` tag, the SPA applies these behaviors:
 |-----|-----------|
 | `<MSG>` | — (no mail) |
 | `<WRN>` | — (no override from list; set at detail level) |
-| `<Ennn>` | `"ST"` |
+| `<Ennn>` | `"ST001"` |
 
 ---
 
@@ -585,18 +587,18 @@ When the user selects a row, the SPA navigates to the detail view following the 
 **Request body:**
 ```json
 {
-  "tipoMail": "GW | GE | SW | SE | ST"
+  "tipoMail": "GW001 | GE001 | SW001 | SE001 | ST001"
 }
 ```
 
-**`tipoMail` values by context:**
+**`tipoMail` values by context (actual COD_MAIL from GDP_MAIL table):**
 | Scenario | Esito tag | `tipoMail` |
 |----------|-----------|-----------|
-| Daily (Giornaliero) | `<WRN>` | `"GW"` — "edizione da integrare" |
-| Daily (Giornaliero) | `<Ennn>` | `"GE"` — "edizione errata" |
-| Historical (Storico) detail | `<WRN>` | `"SW"` — "edizione storica da integrare" |
-| Historical (Storico) detail | `<Ennn>` | `"SE"` — "edizione storica errata" |
-| Historical edition list row | `<Ennn>` | `"ST"` — all editions in delivery |
+| Daily (Giornaliero) | `<WRN>` | `"GW001"` — "edizione da integrare" |
+| Daily (Giornaliero) | `<Ennn>` | `"GE001"` — "edizione non caricata" |
+| Historical (Storico) detail | `<WRN>` | `"SW001"` — "edizione storica da integrare" |
+| Historical (Storico) detail | `<Ennn>` | `"SE001"` — "edizione storica non caricata" |
+| Historical edition list row | `<Ennn>` | `"ST001"` — all editions in delivery |
 
 **UC-05 mail flow:**
 1. BFF calls F14 → receives `{from, to, host, porta, oggetto, testo}`
@@ -609,12 +611,12 @@ When the user selects a row, the SPA navigates to the detail view following the 
 **Response (200):**
 ```json
 {
-  "from": "gdp@csipiemonte.it",
+  "from": "assistenza.bdp@csi.it",
   "to": "editore@testata.it",
-  "host": "mail.csipiemonte.it",
-  "porta": 587,
-  "oggetto": "Edizione del 01/03/2026 - La Sentinella del Canavese",
-  "testo": "Gentile editore, si segnala un'anomalia nell'edizione del..."
+  "host": "mailfarm-app.csi.it",
+  "porta": 25,
+  "oggetto": "Giornali del Piemonte - Edizione da integrare",
+  "testo": "L'edizione del 01/03/2026 della testata La Sentinella del Canavese ha evidenziato le seguenti anomalie:..."
 }
 ```
 
@@ -629,11 +631,11 @@ When the user selects a row, the SPA navigates to the detail view following the 
 **Request body** (operator may have modified `oggetto` and `testo`):
 ```json
 {
-  "from": "gdp@csipiemonte.it",
+  "from": "assistenza.bdp@csi.it",
   "to": "editore@testata.it",
-  "host": "mail.csipiemonte.it",
-  "porta": 587,
-  "oggetto": "Edizione del 01/03/2026 - [edited by operator]",
+  "host": "mailfarm-app.csi.it",
+  "porta": 25,
+  "oggetto": "Giornali del Piemonte - Edizione da integrare [edited by operator]",
   "testo": "Testo della mail [edited by operator]"
 }
 ```
@@ -656,7 +658,10 @@ When the user selects a row, the SPA navigates to the detail view following the 
 **Access:** `operatore` role only (403 for `utentePrivilegiato` or `utenteWeb`)  
 **Backend:**
 1. Call DAM LIBRA API to obscure page content
-2. Update `GDP_PAGINA`: set `OBLIO = true`, `DATA_OBLIO = NOW()`, `NOTA_OBLIO = <details>`  
+2. Update `GDP_PAGINA`: set `OBLIO = <list of items to de-index>` (**varchar(256)**, not boolean), `DATA_OBLIO = NOW()`, `NOTA_OBLIO = <details>`
+
+> **Important:** `GDP_PAGINA.OBLIO` is **varchar(256)**, not a boolean flag. The request body must include the list of content items/terms to be de-indexed. The BFF sets this string value in the DB.
+
 **Corresponds to:** FunE01  
 **Returns:** `202 Accepted`
 
@@ -939,8 +944,9 @@ gdpbff accesses PostgreSQL directly for features that do not route through gdpor
 | `GDP_FASCICOLO_PAG` | READ / WRITE | Manage pages associated with each fascicolo. |
 | `GDP_IMPORT_TASK` | WRITE | Update `STATO='PRO'` for retry of a failed task from Back Office. |
 | `GDP_PREF_TESTATA` | READ / WRITE | Favourites management for `utentePrivilegiato`. |
-| `GDP_MAIL` | READ | Email templates for `F14 — preparaMAIL`. Keyed by `COD_MAIL` (GW, GE, SW, SE, ST). Contains `MITTENTE`, `OGGETTO`, `TESTO` with placeholders. |
-| `GDP_TIPO_EDIZIONE` | READ | Lookup table for decoding edition type codes (OK, AT, PT, SO, AA, ST, AS) into human-readable descriptions. Used in F13/F15 responses. |
+| `GDP_MAIL` | READ | Email templates for `F14 — preparaMAIL`. Keyed by `COD_MAIL` varchar(5): `GW001`, `GE001`, `SW001`, `SE001`, `ST001`. Fields: `SMTP_MAIL_HOST` (mailfarm-app.csi.it), `SMTP_MAIL_PORTA` (25), `MITTENTE` (assistenza.bdp@csi.it), `TESTO_OGGETTO`, `TESTO_MAIL` with placeholders `<[dataED]>` and `<[nomeTestata]>`. |
+| `GDP_TIPO_EDIZIONE` | READ | Lookup table for decoding edition type codes into human-readable descriptions. `COD_TIPO` values: OK, AN, PO, SO, AA, ST, AS. Used in F13/F15 responses. Note: actual seeded code for anticipataria is `AN` (not `AT`). |
+| `GDP_TIPO_FILE` | READ | Lookup table for file anomaly codes: NP (PDF multi-pagina), NL (non leggibile), NF (formato errato), DA (data attesa), PP (prima pagina). Used in `GDP_LOG_EDIZIONE.DESCRIZIONE` parsing. |
 
 ---
 

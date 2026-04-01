@@ -192,18 +192,20 @@ gdporch reads from and writes to the shared GdP PostgreSQL database. No SUPERUSE
 ### GDP_TIPO_EDIZIONE
 - **Access:** READ
 - **Purpose:** Lookup table for decoding `TIPO_EDIZIONE` codes into human-readable descriptions. Used by F13 and F15.
-- **Key fields:** `COD_TIPO_EDIZIONE`, `DESCRIZIONE`
-- **Known codes:**
+- **Key fields:** `COD_TIPO` (varchar 8 — PK), `TIPO_EDIZIONE` (varchar 128)
+- **Seeded data (from init.sql — source of truth):**
 
-| COD_TIPO_EDIZIONE | DESCRIZIONE |
-|-------------------|-------------|
-| `OK` | Corrispondente (regular) |
-| `AT` | Anticipataria (early) |
-| `PT` | Posticipataria (late) |
-| `SO` | Sospesa (suspended) |
-| `AA` | Anomala (anomalous — blocking) |
-| `ST` | Storica (historical) |
-| `AS` | Anomala storica (anomalous historical) |
+| COD_TIPO | TIPO_EDIZIONE |
+|----------|---------------|
+| `OK` | corrispondente |
+| `SO` | sospesa |
+| `AN` | anticipataria |
+| `PO` | posticipataria |
+| `AA` | anomalia edizione attesa |
+| `ST` | edizione storica |
+| `AS` | edizione storica con anomalia |
+
+> **⚠️ Discrepancy:** SFU-01 specification uses codes `AT` (anticipataria) and `PT` (posticipataria) in the F04 process description, but the actual DB lookup table uses `AN` and `PO`. The DB init.sql is the **source of truth** — use `AN` and `PO` in all code.
 
 ---
 
@@ -376,8 +378,8 @@ Operation is **idempotent** — no duplicates.
 
 **Classify edition type (`<tipoEdizione>`):**
 - `<dataEdizione>` == processing date → `"OK"`
-- `<dataEdizione>` > processing date → `"AT"` (anticipataria — early)
-- `<dataEdizione>` < processing date → `"PT"` (posticipataria — late)
+- `<dataEdizione>` > processing date → `"AN"` (anticipataria — early) ⚠️ SFU-01 uses `"AT"` but DB lookup table `GDP_TIPO_EDIZIONE` has `"AN"` — use `"AN"`
+- `<dataEdizione>` < processing date → `"PO"` (posticipataria — late) ⚠️ SFU-01 uses `"PT"` but DB lookup table has `"PO"` — use `"PO"`
 - `<dataEdizione>` in DB but `SOSPESA=True` → `"SO"` (suspended)
 - `<dataEdizione>` NOT in DB → `"AA"` (anomala — blocking)
 
@@ -1283,4 +1285,3 @@ If no records found → MSG00001
 - `target/generated-sources/` must be in `.gitignore`
 - No SSH keys or credentials committed to git repository
 - No SUPERUSER for DB connection
-- fixed database schema
