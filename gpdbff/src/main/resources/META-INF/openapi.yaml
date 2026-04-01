@@ -5,7 +5,10 @@ info:
     Single HTTP entry point for gdpbospa (Back Office) and gdpfospa (Front Office) SPAs.
     System: GDP — Giornali del Piemonte. Client: Consiglio Regionale del Piemonte.
     Plan Reference: Piano di Sviluppo 2025 — rif. 2025.CR.CC.01.
-    Version: 1.0 (March 2026). Status: Draft — under review.
+    Version: 1.0-rev2 (March 2026). Status: Draft — under review.
+    Revision notes: Fixed tipoMail codes (GW001 etc.), MENSILITA integer,
+    INVIO_EDIZIONE singular, OBLIO varchar, FO anonymous security, FascicoloDetail fields,
+    MailComposition SMTP examples aligned to GDP_MAIL table data.
 
     ## Authentication
     - `/bo/**` — requires `operatore` role (Shibboleth SSO → JWT)
@@ -14,7 +17,7 @@ info:
     ## Visibility Rule
     For `utenteWeb`: editions with `DATA_PUBBLICAZIONE > CURRENT_DATE` are excluded
     from all search results and edition listings (last-2-editions filter).
-  version: 1.0.0
+  version: 1.0.0-rev2
   contact:
     name: CSI Piemonte — Team GDP
   license:
@@ -650,11 +653,14 @@ paths:
               properties:
                 tipoMail:
                   type: string
-                  enum: [GW, GE, SW, SE, ST]
+                  enum: [GW001, GE001, SW001, SE001, ST001]
                   description: |
-                    GW=Daily integration, GE=Daily error,
-                    SW=Historical integration, SE=Historical error,
-                    ST=Historical full delivery error.
+                    GW001=Daily integration warning (edizione da integrare),
+                    GE001=Daily error (edizione non caricata),
+                    SW001=Historical integration warning,
+                    SE001=Historical error,
+                    ST001=Historical full delivery error.
+                    Note: these are the actual COD_MAIL values in GDP_MAIL table.
       responses:
         '200':
           description: Mail payload prepared
@@ -818,6 +824,9 @@ paths:
       tags: [fo-ricerca]
       operationId: getFoRicerca
       summary: Full-text archive search
+      security:
+        - bearerAuth: []
+        - {}  # allows anonymous (utenteWeb)
       description: |
         Delegates to DAM LIBRA search API.
         Applies last-2-editions filter for utenteWeb:
@@ -885,6 +894,9 @@ paths:
       tags: [fo-ricerca]
       operationId: getFoRicercaAvanzata
       summary: Advanced archive search
+      security:
+        - bearerAuth: []
+        - {}  # allows anonymous (utenteWeb)
       description: |
         Adds AND/OR/EXACT operator parameter over /fo/ricerca.
         Same visibility rules apply.
@@ -956,6 +968,9 @@ paths:
       tags: [fo-testate]
       operationId: getFoTestate
       summary: List consultable testate
+      security:
+        - bearerAuth: []
+        - {}  # allows anonymous (utenteWeb)
       description: Direct DB read from GDP_TESTATA.
       parameters:
         - name: provincia
@@ -985,6 +1000,9 @@ paths:
       tags: [fo-testate]
       operationId: getFoTestataById
       summary: Public testata data
+      security:
+        - bearerAuth: []
+        - {}  # allows anonymous (utenteWeb)
       description: Returns only public fields (name, description, province, periodicity). NOT SFTP config.
       responses:
         '200':
@@ -1003,6 +1021,9 @@ paths:
       tags: [fo-testate]
       operationId: getFoEdizioniByTestata
       summary: List editions of a testata
+      security:
+        - bearerAuth: []
+        - {}  # allows anonymous (utenteWeb) — last-2-editions filter applied
       description: |
         Direct DB read from GDP_EDIZIONE.
         Applies last-2-editions filter for utenteWeb
@@ -1050,6 +1071,9 @@ paths:
       tags: [fo-edizioni]
       operationId: getFoEdizioneById
       summary: Edition detail with page list and metadata
+      security:
+        - bearerAuth: []
+        - {}  # allows anonymous
       description: |
         Direct DB read from GDP_EDIZIONE + GDP_PAGINA.
         If utenteWeb and edition is within last 2 → 403.
@@ -1078,6 +1102,9 @@ paths:
       tags: [fo-edizioni]
       operationId: getFoPaginaPdf
       summary: PDF stream of a specific page
+      security:
+        - bearerAuth: []
+        - {}  # allows anonymous
       description: |
         Retrieves PDF from DAM LIBRA and streams to client.
         Uses chunked transfer encoding — no full in-memory buffering.
@@ -1121,6 +1148,9 @@ paths:
       tags: [fo-fascicoli]
       operationId: postFoFascicolo
       summary: Create a new fascicolo
+      security:
+        - bearerAuth: []
+        - {}  # utenteWeb: temporary PDF; utentePrivilegiato: persisted
       description: |
         Assembles PDF from individual LIBRA pages using Apache PDFBox 3.x.
         - utenteWeb: PDF generated on-the-fly, not persisted. Returns base64 PDF.
@@ -1227,6 +1257,9 @@ paths:
       tags: [fo-fascicoli]
       operationId: getFoFascicoloPdf
       summary: Download fascicolo PDF
+      security:
+        - bearerAuth: []
+        - {}  # utenteWeb: on-the-fly PDF; utentePrivilegiato: saved PDF
       description: |
         - utentePrivilegiato: serves saved PDF.
         - utenteWeb: generates PDF on-the-fly (page assembly).
@@ -1519,8 +1552,9 @@ components:
           format: uri
         entePropietario:
           type: string
-        invioEdizioni:
+        invioEdizione:
           type: boolean
+          description: True = testata sends periodic editions. Maps to DB column INVIO_EDIZIONE.
         comune:
           type: string
         indirizzo:
@@ -1576,10 +1610,15 @@ components:
           format: int64
           example: 1
         mensilita:
-          type: number
-          format: double
-          example: 0.5
-          description: Monthly interval (0 = sub-monthly weekly pattern)
+          type: integer
+          example: 1
+          description: |
+            Monthly interval as integer (DB: GDP_PERIODICITA.MENSILITA integer).
+            0 = sub-monthly weekly pattern.
+            1 = monthly, 2 = bimonthly, 3 = quarterly, 4 = every 4 months,
+            6 = semi-annual, 12 = annual.
+            Note: bimensile/quindicinale (twice-monthly) uses GG_PERIODICITA with two dates
+            (e.g. G01;G15) while MENSILITA=1.
         ggPeriodicita:
           type: string
           example: 'G01;G15'
@@ -1900,17 +1939,20 @@ components:
         from:
           type: string
           format: email
-          example: gdp@csipiemonte.it
+          example: assistenza.bdp@csi.it
+          description: Sender address. From GDP_MAIL.MITTENTE.
         to:
           type: string
           format: email
           example: editore@testata.it
         host:
           type: string
-          example: mail.csipiemonte.it
+          example: mailfarm-app.csi.it
+          description: SMTP host. From GDP_MAIL.SMTP_MAIL_HOST.
         porta:
           type: integer
-          example: 587
+          example: 25
+          description: SMTP port. From GDP_MAIL.SMTP_MAIL_PORTA.
         oggetto:
           type: string
           example: Edizione del 01/03/2026 - La Sentinella del Canavese
@@ -1941,13 +1983,16 @@ components:
 
     OblioStatus:
       type: object
-      required: [idPagina, oblio]
+      required: [idPagina]
       properties:
         idPagina:
           type: integer
           format: int64
         oblio:
-          type: boolean
+          type: string
+          maxLength: 256
+          nullable: true
+          description: List of content items to be de-indexed (GDPR oblio). NULL if no oblio requested.
         dataOblio:
           type: string
           format: date-time
@@ -2048,7 +2093,9 @@ components:
         stato:
           type: integer
         oblio:
-          type: boolean
+          type: string
+          maxLength: 256
+          description: List of content items to be de-indexed (GDPR oblio). NULL if no oblio requested.
 
     EdizioneDetail:
       allOf:
@@ -2070,6 +2117,14 @@ components:
       type: object
       required: [pagine]
       properties:
+        titolo:
+          type: string
+          maxLength: 128
+          description: Optional user-defined title
+        noteFascicolo:
+          type: string
+          maxLength: 512
+          description: Optional user notes
         pagine:
           type: array
           items:
@@ -2123,11 +2178,29 @@ components:
         idFascicolo:
           type: integer
           format: int64
+        titolo:
+          type: string
+          maxLength: 128
+          description: Optional user-defined title (GDP_FASCICOLO.TITOLO)
+        noteFascicolo:
+          type: string
+          maxLength: 512
+          description: User notes on the fascicolo (GDP_FASCICOLO.NOTE_FASCICOLO)
         creazione:
           type: string
           format: date-time
+        dtModifica:
+          type: string
+          format: date
+          nullable: true
+        dtEliminazione:
+          type: string
+          format: date
+          nullable: true
+          description: Soft-delete date
         pagine:
           type: array
+          description: List of page IDs in the fascicolo (ordered by POSIZIONE)
           items:
             type: integer
             format: int64
