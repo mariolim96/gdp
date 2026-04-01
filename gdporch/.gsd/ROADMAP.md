@@ -11,39 +11,39 @@
 - [ ] DAM Transmission Service (F09, F10)
 - [ ] Monitoring REST API (F12, F13, F14, F15, F16, F17, F18, F20, F21, F22)
 
+---
+
 ## Phases
 
 ### Phase 1: Foundation & Codebase Consolidation
 **Status**: 🟢 Completed (Prior Context)
 **Objective**: Establish repository, OpenAPI contracts, baseline Quarkus configuration, and DB Panache entities architecture.
-**Requirements**: REQ-01
 
 ### Phase 2: Odoo Tickets Generation
 **Status**: 🟢 Completed
 **Objective**: Generate and formalize a comprehensive list of all Odoo tickets required to complete the project phases based on the SPEC and ROADMAP.
-**Requirements**: None
 
-### Phase 3: Configuration & Validation Services
+### Phase 3: Expected Scheduling & Acquisition
 **Status**: ⬜ Not Started
-**Objective**: Establish core validation rules (F04, F07 requirements), parsing strategies (PDFBox, PDF naming rules), and expected date configuration calculators (F01, F05).
-**Requirements**: REQ-02, REQ-03
+**Objective**: Establish the core acquisition engine. Calculate expected dates (F01), manage suspensions (F05/F18), create SFTP folder structures (F02), and poll for incoming periodic editions (F03).
 
-### Phase 4: DB Integration & State Management
+### Phase 4: Validation & Persistence
 **Status**: ⬜ Not Started
-**Objective**: Fully implement the F08 database persistence service for inserting/updating edition and page records based on validated models, along with base data lookup queries.
-**Requirements**: REQ-04
+**Objective**: Implement the validation "Brain" and the permanent state recorder. Validating PDF contents (F04), performing database persistence (F08), and exposing testata lookups (F16/17).
 
-### Phase 5: SFTP Integration & Polling Jobs
+### Phase 5: Historical Delivery
 **Status**: ⬜ Not Started
-**Objective**: Implement SFTP folder creation, periodic polling (F02, F03), historical polling (F06), and the orchestration linking them to validation and DB routines.
-**Requirements**: REQ-05, REQ-06
+**Objective**: Integrate archivist-driven historical loads. Implement historical polling (F06) and specific historical validation rules (F07).
 
 ### Phase 6: DAM Transmission Pipeline
 **Status**: ⬜ Not Started
-**Objective**: Create XML (F09) generation conforming to the schema, package it alongside the PDF and TXT into a ZIP, and implement the cronjob to transmit to DAM LIBRA (F10).
-**Requirements**: REQ-07
+**Objective**: Create the automated export flow. XML metadata generation (F09), ZIP packaging, and transmitting to DAM LIBRA (F10) with cleanup routines (F19).
 
 ### Phase 7: Monitoring REST API Endpoints
 **Status**: ⬜ Not Started
-**Objective**: Expose all `/bo/**` operations for BFF consumption including acquisition listings, mail preparation/sending (F14, F22), and DAM status queue active integrations (F20, F21).
-**Requirements**: REQ-08
+**Objective**: Expose all `/bo/**` status and control operations. Monitoring queries (F12/13/15), mail handling (F14/22), and DAM queue retry logic (F20/21).
+
+---
+
+## Final Review & Handover
+**Objective**: Full end-to-end integration testing in staging environment, observability tuning (Prometheus/Grafana), and handover to CSI ops Team for K8s deployment.

@@ -5,6 +5,41 @@
 ## Vision
 gdporch is the Orchestration Engine — a pure backend service without a user interface. Its primary role is to serve as the invisible backbone that polls, acquires, validates, and transmits editorial editions to the DAM via scheduled jobs and async processes, while also providing REST monitoring endpoints for the BFF layer.
 
+## Functional Flow Walkthrough
+
+### 1. Periodic Flow (Daily)
+The orchestrator operates via three main automated triggers:
+- **Trigger A (Yearly/On-demand - F01):** Calculates all expected release dates for each active testata and saves them to `GDP_DATA_USCITA`. This is the foundation for all subsequent steps.
+- **Trigger B (Daily at 20:00 - F02):** Physically creates the directory for tomorrow's edition on the SFTP server (`yyyy-mm-dd`), where publishers must deposit their PDFs.
+- **Trigger C (Every 15 minutes - F03):** Scans all SFTP folders. If new files are found, it moves them to a `/_tmp` area and asynchronously triggers the validation process (**F04**).
+
+### 2. The Processing Heart (F04)
+Triggered asynchronously by F03, **F04** performs the following sequence:
+- **Coherence Check:** verifies the edition date against the DB (Classifies as OK, Early, Late, Suspended, or Anomalous).
+- **PDF Pre-processing:** checks for multi-page PDFs and splits them if necessary.
+- **Readability:** ensures PDF/A compliance.
+- **Naming Standard:** validates and renames files to conform to the system standard.
+- **Extraction:** Extracts text via `pdftotext`.
+- **Heuristics:** Checks for date presence and front-page signature.
+- **Execution Chain:** Calls **F08** (DB Sync), then **F09** (XML Sync), and finally triggers **F10** (DAM Async).
+
+### 3. Persistence & Transmission
+- **F08 (Database):** Inserts or updates records in `GDP_EDIZIONE` and `GDP_PAGINA`.
+- **F09 (Packaging):** Builds the XML metadata file, compresses it with the PDF/TXT assets into a `.zip`, and inserts a record into the `GDP_IMPORT_TASK` transmission queue.
+- **F10 (DAM Courier - every 30 min):** Reads the queue (ordered by priority) and submits the ZIP file to the **DAM LIBRA** API.
+
+### 4. Historical Flow (Bulk Load)
+- **Nightly Trigger:** Scans `flusso_saltuario` for `CONS_yyyy-mm-dd` packages.
+- **F07:** Validates historical edition dates and files (PDF, TXT, TIF).
+- **Completion:** Triggers the same `F08` → `F09` → `F10` chain but with **Priority 100** (historical loads are processed after daily periodic ones).
+
+### 5. BFF Console (Monitoring & Control)
+Exposes synchronous operations for the UI:
+- **Queries:** `F12`, `F13`, `F15` for acquisition logs and details.
+- **Operations:** `F20` (Check DAM Job status), `F21` (Manual retry for failed tasks).
+- **Notifications:** `F14` + `F22` for preparing and sending mail notifications.
+- **Configuration:** `F05` for manually suspending expected dates.
+
 ## Goals
 1. Monitor SFTP server for new editions deposited by publishers (periodic flow) and archivists (historical flow).
 2. Validate every acquired PDF file according to strict format and naming rules.
