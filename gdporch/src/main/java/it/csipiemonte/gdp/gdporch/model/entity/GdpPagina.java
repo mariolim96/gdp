@@ -13,13 +13,13 @@ public class GdpPagina extends PanacheEntityBase {
 
     @Id
     @Column(name = "ID_GDP_PAGINA")
-    public Long id;
+    public Integer id;
 
     @Column(name = "FK_GDP_TESTATA", nullable = false)
-    public Long fkGdpTestata;
+    public Integer fkGdpTestata;
 
     @Column(name = "FK_GDP_EDIZIONE", nullable = false)
-    public Long fkGdpEdizione;
+    public Integer fkGdpEdizione;
 
     @Column(name = "NUM_PAGINA", nullable = false)
     public Integer numPagina;

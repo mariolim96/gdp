@@ -12,7 +12,7 @@ public class GdpUtenteSftp extends PanacheEntityBase {
 
     @Id
     @Column(name = "ID_GDP_UTENTESFTP")
-    public Long id;
+    public Integer id;
 
     @Column(name = "USERNAME", nullable = false, length = 128)
     public String username;

@@ -15,6 +15,18 @@ services:
     networks:
       - gdp-network
 
+  sftp:
+    image: atmoz/sftp:alpine
+    container_name: gdp-sftp
+    environment:
+      - SFTP_USERS=tester:password:1001:1001:upload
+    ports:
+      - "2222:22"
+    volumes:
+      - ./sftp-data/tester:/home/tester/upload
+    networks:
+      - gdp-network
+
 volumes:
   postgres_data:
 

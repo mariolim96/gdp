@@ -8,7 +8,8 @@
 
 | Software | Download | Note |
 |---|---|---|
-| RebexTinySftpServer | rebex.net/tiny-sftp-server/ | Versione Windows gratuita |
+| Docker Desktop | docker.com | Alternativa portabile (consigliata) |
+| RebexTinySftpServer | rebex.net/tiny-sftp-server/ | Versione Windows |
 | MobaXterm | mobaxterm.mobatek.net | Home Edition gratuita |
 | Java 17+ / Maven | openjdk.org | Per il progetto Quarkus |
 | JSch (dipendenza Maven) | — | Aggiunta al `pom.xml` |
@@ -90,6 +91,39 @@ Root:     C:\SFTP_TEST
 
 ---
 
+## Parte 1.2 — Alternativa Docker (Portabile e Veloce)
+
+Se hai Docker installato, puoi evitare di scaricare software Windows usando un'immagine leggera. Questo garantisce che tutto il team abbia lo stesso ambiente.
+
+### STEP 3.1 — Configura `docker-compose.yml`
+
+Nel root del tuo progetto, assicurati di avere il servizio SFTP:
+
+```yaml
+services:
+  sftp:
+    image: atmoz/sftp:alpine
+    container_name: gdp-sftp
+    environment:
+      # Formato: user:password:uid:gid:root_folder
+      - SFTP_USERS=tester:password:1001:1001:upload
+    ports:
+      - "2222:22"
+    volumes:
+      - ./sftp-data/tester:/home/tester/upload
+```
+
+### STEP 3.2 — Avvia il container
+
+```bash
+docker compose up -d sftp
+```
+
+> [!NOTE]
+> I file creati dal codice appariranno nella cartella locale `./sftp-data/tester/upload`.
+
+---
+
 ## Parte 2 — Connettersi con MobaXterm
 
 ### STEP 4 — Creare una nuova sessione SFTP
@@ -152,12 +186,22 @@ Nel tuo progetto Quarkus aggiungi la dipendenza per **JSch**:
 Aggiungi le proprietà di connessione SFTP nel file `src/main/resources/application.properties`:
 
 ```properties
-# SFTP Configuration - RebexTinySftpServer
-sftp.host=127.0.0.1
+# SFTP Configuration (Local Docker o Rebex)
+sftp.host=localhost
 sftp.port=2222
-sftp.username=tester
-sftp.password=password
-sftp.remote-dir=/
+sftp.username=${SFTP_USER:tester}
+sftp.password=${SFTP_PASS:password}
+sftp.key.path=${SFTP_KEY}
+```
+
+### STEP 8.1 — Gestione env vars con file `.env` (Best Practice)
+
+Per non scrivere password nel codice, crea un file `.env` nella root di Quarkus (`gdporch/.env`):
+
+```env
+GDP_DB_USER=gdp_user
+GDP_DB_PASSWORD=gdp_password
+SFTP_KEY=C:/Users/tuo_nome/.ssh/id_rsa
 ```
 
 > Questi valori corrispondono esattamente a quelli configurati nel file `App.config` di RebexTinySftpServer.

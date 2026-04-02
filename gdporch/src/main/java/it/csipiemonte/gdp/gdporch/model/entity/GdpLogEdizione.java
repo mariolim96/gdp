@@ -12,10 +12,10 @@ public class GdpLogEdizione extends PanacheEntityBase {
 
     @Id
     @Column(name = "ID_GDP_LOG_EDIZIONE")
-    public Long id;
+    public Integer id;
 
     @Column(name = "FK_GDP_LOG", nullable = false)
-    public Long fkGdpLog;
+    public Integer fkGdpLog;
 
     @Column(name = "NRO_PAG_ACQUISITE")
     public Integer nroPagAcquisite;
@@ -24,7 +24,7 @@ public class GdpLogEdizione extends PanacheEntityBase {
     public String tipoEdizione;
 
     @Column(name = "FK_GDP_EDIZIONE", nullable = false)
-    public Long fkGdpEdizione;
+    public Integer fkGdpEdizione;
 
     @Column(name = "PATH_EDIZIONE", length = 256)
     public String pathEdizione;

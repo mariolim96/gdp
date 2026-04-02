@@ -1,19 +1,19 @@
 package it.csipiemonte.gdp.gdporch.model.repository;
 
 import it.csipiemonte.gdp.gdporch.model.entity.GdpLogEdizione;
-import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
-public class GdpLogEdizioneRepository implements PanacheRepository<GdpLogEdizione> {
+public class GdpLogEdizioneRepository implements PanacheRepositoryBase<GdpLogEdizione, Integer> {
 
-    public List<GdpLogEdizione> findByLog(Long fkGdpLog) {
+    public List<GdpLogEdizione> findByLog(Integer fkGdpLog) {
         return list("fkGdpLog", fkGdpLog);
     }
 
-    public Optional<GdpLogEdizione> findByEdizione(Long fkGdpEdizione) {
+    public Optional<GdpLogEdizione> findByEdizione(Integer fkGdpEdizione) {
         return find("fkGdpEdizione", fkGdpEdizione).firstResultOptional();
     }
 }

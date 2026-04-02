@@ -13,10 +13,10 @@ public class GdpPeriodicita extends PanacheEntityBase {
 
     @Id
     @Column(name = "ID_GDP_PERIODICITA")
-    public Long id;
+    public Integer id;
 
     @Column(name = "FK_GDP_TESTATA", nullable = false)
-    public Long fkGdpTestata;
+    public Integer fkGdpTestata;
 
     @Column(name = "MENSILITA", nullable = false)
     public Integer mensilita;

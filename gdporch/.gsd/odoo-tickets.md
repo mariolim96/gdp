@@ -18,9 +18,10 @@ Below is a comprehensive list of all potential Odoo tickets required to complete
 **Description**: Implement the `sospensioneEdizioneAttesa` (F05) service to allow manual suspension of expected editions, and `verifDateAttese` (F18) for retrieving the calendar of expected/suspended dates.
 **Estimate**: 8h
 
-### Ticket: Implement SFTP Infrastructure & Directory Generation (F02)
+### Ticket: Implement SFTP Infrastructure & Directory Generation (F02) [COMPLETED]
 **Type**: Independent
 **Description**: Build a reusable Apache MINA SSHD SFTP client wrapper. Implement the scheduled job `creaCartellaEdizioneAttesa` (F02) that polls tomorrow's expected dates and generates empty directories on the Publisher's SFTP.
+**Implementation Note**: Switched from MINA to JSch and added `atmoz/sftp` Docker container for local testing.
 **Estimate**: 18h
 
 ### Ticket: Implement Periodic Publishing Polling Job (F03)

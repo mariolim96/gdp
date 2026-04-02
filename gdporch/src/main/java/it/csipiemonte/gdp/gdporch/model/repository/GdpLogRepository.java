@@ -1,14 +1,14 @@
 package it.csipiemonte.gdp.gdporch.model.repository;
 
 import it.csipiemonte.gdp.gdporch.model.entity.GdpLog;
-import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 
 @ApplicationScoped
-public class GdpLogRepository implements PanacheRepository<GdpLog> {
+public class GdpLogRepository implements PanacheRepositoryBase<GdpLog, Integer> {
 
-    public List<GdpLog> findByTestata(Long fkGdpTestata) {
+    public List<GdpLog> findByTestata(Integer fkGdpTestata) {
         return list("fkGdpTestata", fkGdpTestata);
     }
 
