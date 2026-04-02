@@ -144,3 +144,28 @@ INSERT INTO GDP_UTENTEWEB (ID_GDP_UTENTEWEB, CODICE_FISCALE, COGNOME, NOME, RUOL
 -- A deactivated SFTP user.
 INSERT INTO GDP_UTENTESFTP (ID_GDP_UTENTESFTP, USERNAME, PASSWORD, HOME_SFTP, RIF_TESTATA, STATO) VALUES
 (5, 'sftp_old_vendor', 'pass_old', 'old_vendor', '1', 'INATTIVO');
+
+-- Creazione delle sequenze necessarie
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_coda_caricamento START WITH 10;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_data_uscita START WITH 10;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_edizione START WITH 10;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_log START WITH 10;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_log_edizione START WITH 10;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_pagina START WITH 20;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_periodicita START WITH 10;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_tema START WITH 10;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_testata START WITH 10;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_utentesftp START WITH 10;
+CREATE SEQUENCE IF NOT EXISTS seq_gdp_utenteweb START WITH 10;
+-- Sincronizzazione delle sequenze con i dati pre-caricati (per evitare errori di chiave duplicata)
+SELECT setval('seq_gdp_coda_caricamento', (SELECT COALESCE(max(ID_GDP_CODA_CARICAMENTO), 1) FROM GDP_CODA_CARICAMENTO));
+SELECT setval('seq_gdp_data_uscita', (SELECT COALESCE(max(ID_GDP_DATA_USCITA), 1) FROM GDP_DATA_USCITA));
+SELECT setval('seq_gdp_edizione', (SELECT COALESCE(max(ID_GDP_EDIZIONE), 1) FROM GDP_EDIZIONE));
+SELECT setval('seq_gdp_log', (SELECT COALESCE(max(ID_GDP_LOG), 1) FROM GDP_LOG));
+SELECT setval('seq_gdp_log_edizione', (SELECT COALESCE(max(ID_GDP_LOG_EDIZIONE), 1) FROM GDP_LOG_EDIZIONE));
+SELECT setval('seq_gdp_pagina', (SELECT COALESCE(max(ID_GDP_PAGINA), 1) FROM GDP_PAGINA));
+SELECT setval('seq_gdp_periodicita', (SELECT COALESCE(max(ID_GDP_PERIODICITA), 1) FROM GDP_PERIODICITA));
+SELECT setval('seq_gdp_tema', (SELECT COALESCE(max(COD_TEMA), 1) FROM GDP_TEMA));
+SELECT setval('seq_gdp_testata', (SELECT COALESCE(max(ID_GDP_TESTATA), 1) FROM GDP_TESTATA));
+SELECT setval('seq_gdp_utentesftp', (SELECT COALESCE(max(ID_GDP_UTENTESFTP), 1) FROM GDP_UTENTESFTP));
+SELECT setval('seq_gdp_utenteweb', (SELECT COALESCE(max(ID_GDP_UTENTEWEB), 1) FROM GDP_UTENTEWEB));

@@ -3,7 +3,10 @@ package it.csipiemonte.gdp.gdporch.model.entity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,6 +16,8 @@ import java.time.LocalDate;
 public class GdpTestata extends PanacheEntityBase {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_gdp_testata")
+    @SequenceGenerator(name = "seq_gdp_testata", sequenceName = "seq_gdp_testata", allocationSize = 1)
     @Column(name = "ID_GDP_TESTATA")
     public Integer id;
 

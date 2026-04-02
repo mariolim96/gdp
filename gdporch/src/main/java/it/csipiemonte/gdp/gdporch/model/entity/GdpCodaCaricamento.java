@@ -3,7 +3,10 @@ package it.csipiemonte.gdp.gdporch.model.entity;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,6 +16,8 @@ import java.time.LocalDateTime;
 public class GdpCodaCaricamento extends PanacheEntityBase {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_gdp_coda_caricamento")
+    @SequenceGenerator(name = "seq_gdp_coda_caricamento", sequenceName = "seq_gdp_coda_caricamento", allocationSize = 1)
     @Column(name = "ID_GDP_CODA_CARICAMENTO")
     public Integer id;
 
