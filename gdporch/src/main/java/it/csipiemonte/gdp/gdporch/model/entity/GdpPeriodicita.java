@@ -37,4 +37,60 @@ public class GdpPeriodicita extends PanacheEntityBase {
 
     @Column(name = "FINE_SOSPENSIONE")
     public LocalDate fineSospensione;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getFkGdpTestata() {
+        return fkGdpTestata;
+    }
+
+    public void setFkGdpTestata(Integer fkGdpTestata) {
+        this.fkGdpTestata = fkGdpTestata;
+    }
+
+    public Integer getMensilita() {
+        return mensilita;
+    }
+
+    public void setMensilita(Integer mensilita) {
+        this.mensilita = mensilita;
+    }
+
+    public String getGgPeriodicita() {
+        return ggPeriodicita;
+    }
+
+    public void setGgPeriodicita(String ggPeriodicita) {
+        this.ggPeriodicita = ggPeriodicita;
+    }
+
+    public LocalDate getDataFineValidita() {
+        return dataFineValidita;
+    }
+
+    public void setDataFineValidita(LocalDate dataFineValidita) {
+        this.dataFineValidita = dataFineValidita;
+    }
+
+    public LocalDate getInizioSospensione() {
+        return inizioSospensione;
+    }
+
+    public void setInizioSospensione(LocalDate inizioSospensione) {
+        this.inizioSospensione = inizioSospensione;
+    }
+
+    public LocalDate getFineSospensione() {
+        return fineSospensione;
+    }
+
+    public void setFineSospensione(LocalDate fineSospensione) {
+        this.fineSospensione = fineSospensione;
+    }
 }
