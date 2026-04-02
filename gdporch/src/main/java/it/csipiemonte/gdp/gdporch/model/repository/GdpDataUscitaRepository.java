@@ -23,4 +23,9 @@ public class GdpDataUscitaRepository implements PanacheRepositoryBase<GdpDataUsc
         LocalDate tomorrow = LocalDate.now().plusDays(1);
         return list("dataAttesa = ?1 and sospesa = false", tomorrow);
     }
+
+    public List<GdpDataUscita> findByPeriodicitaAndRange(Integer fkGdpPeriodicita, LocalDate start, LocalDate end) {
+        return list("fkGdpPeriodicita = ?1 and dataAttesa between ?2 and ?3",
+                fkGdpPeriodicita, start, end);
+    }
 }

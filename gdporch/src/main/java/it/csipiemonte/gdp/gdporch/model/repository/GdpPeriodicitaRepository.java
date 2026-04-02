@@ -16,4 +16,8 @@ public class GdpPeriodicitaRepository implements PanacheRepositoryBase<GdpPeriod
     public Optional<GdpPeriodicita> findFirstByTestata(Integer fkGdpTestata) {
         return find("fkGdpTestata", fkGdpTestata).firstResultOptional();
     }
+
+    public GdpPeriodicita findActiveByTestata(Integer fkGdpTestata) {
+        return find("fkGdpTestata = ?1 and dataFineValidita is null", fkGdpTestata).firstResult();
+    }
 }
