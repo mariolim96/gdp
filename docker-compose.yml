@@ -19,11 +19,11 @@ services:
     image: atmoz/sftp:alpine
     container_name: gdp-sftp
     environment:
-      - SFTP_USERS=tester:password:1001:1001:upload
+      - SFTP_USERS=tester:password:1001:1001:flusso_regolare,flusso_saltuario,_tmp,_dam,_errata
     ports:
       - "2222:22"
     volumes:
-      - ./sftp-data/tester:/home/tester/upload
+      - ./sftp-data:/home/tester
     networks:
       - gdp-network
 

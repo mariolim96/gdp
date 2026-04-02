@@ -13,12 +13,12 @@ INSERT INTO GDP_UTENTEWEB (ID_GDP_UTENTEWEB, CODICE_FISCALE, COGNOME, NOME, RUOL
 -- 2. Populating GDP_TESTATA
 -- Note: COD_TEMA (1=Cronaca Locale, 2=PA, 3=Lavoro, 4=Cinema, 5=Cultura)
 -- Note: PROVINCIA (TO, AL, AT, BI, CN, NO, VB, VC)
-INSERT INTO GDP_TESTATA (ID_GDP_TESTATA, NOME_TESTATA, INVIO_EDIZIONE, STATO, COD_TEMA, PROVINCIA, DESCRIZIONE) VALUES
-(1, 'Gazzetta del Piemonte', TRUE, 0, 1, 'TO', 'Quotidiano di cronaca locale di Torino e provincia'),
-(2, 'Il Corriere di Torino', TRUE, 0, 1, 'TO', 'Storico corriere di informazione piemontese'),
-(3, 'Cuneo News', TRUE, 0, 2, 'CN', 'Informazioni sulla pubblica amministrazione del cuneese'),
-(4, 'Novara Lavoro', FALSE, 1, 3, 'NO', 'Edizione storica sulle opportunita lavorative a Novara'),
-(5, 'Cinema Astigiano', TRUE, 0, 4, 'AT', 'Tutto sul mondo del cinema nella provincia di Asti');
+INSERT INTO GDP_TESTATA (ID_GDP_TESTATA, NOME_TESTATA, CARTELLA_TESTATA, INVIO_EDIZIONE, STATO, COD_TEMA, PROVINCIA, DESCRIZIONE) VALUES
+(1, 'Gazzetta del Piemonte', 'gazzetta-del-piemonte', TRUE, 0, 1, 'TO', 'Quotidiano di cronaca locale di Torino e provincia'),
+(2, 'Il Corriere di Torino', 'corriere-torino', TRUE, 0, 1, 'TO', 'Storico corriere di informazione piemontese'),
+(3, 'Cuneo News', 'cuneo-news', TRUE, 0, 2, 'CN', 'Informazioni sulla pubblica amministrazione del cuneese'),
+(4, 'Novara Lavoro', 'novara-lavoro', FALSE, 1, 3, 'NO', 'Edizione storica sulle opportunita lavorative a Novara'),
+(5, 'Cinema Astigiano', 'cinema-astigiano', TRUE, 0, 4, 'AT', 'Tutto sul mondo del cinema nella provincia di Asti');
 
 -- 3. Populating GDP_PERIODICITA
 INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_PERIODICITA) VALUES
@@ -143,4 +143,4 @@ INSERT INTO GDP_UTENTEWEB (ID_GDP_UTENTEWEB, CODICE_FISCALE, COGNOME, NOME, RUOL
 
 -- A deactivated SFTP user.
 INSERT INTO GDP_UTENTESFTP (ID_GDP_UTENTESFTP, USERNAME, PASSWORD, HOME_SFTP, RIF_TESTATA, STATO) VALUES
-(5, 'sftp_old_vendor', 'pass_old', '/sftp/old_vendor', '1', 'INATTIVO');
+(5, 'sftp_old_vendor', 'pass_old', 'old_vendor', '1', 'INATTIVO');
