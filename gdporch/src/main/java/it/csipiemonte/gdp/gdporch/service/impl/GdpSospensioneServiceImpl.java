@@ -1,4 +1,4 @@
-package it.csipiemonte.gdp.gdporch.model.service.serviceImpl;
+package it.csipiemonte.gdp.gdporch.service.impl;
 
 import java.util.List;
 
@@ -8,7 +8,7 @@ import it.csipiemonte.gdp.gdporch.model.entity.GdpDataUscita;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpPeriodicita;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpDataUscitaRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpPeriodicitaRepository;
-import it.csipiemonte.gdp.gdporch.model.service.GdpSospensioneService;
+import it.csipiemonte.gdp.gdporch.service.GdpSospensioneService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -24,7 +24,7 @@ public class GdpSospensioneServiceImpl implements GdpSospensioneService {
     
     @Override
     @Transactional
-    public SospensioneResponse sospendi(Long idTestata, DateRangeRequest request) {
+    public SospensioneResponse sospendi(Integer idTestata, DateRangeRequest request) {
     
         // Validation
         if (request.getDataInizio() == null || request.getDataFine() == null || idTestata == null) {
@@ -37,7 +37,7 @@ public class GdpSospensioneServiceImpl implements GdpSospensioneService {
     
         // 1. Get Periodicita
         // Search for active periodicity (dataFineValidita IS NULL)
-        GdpPeriodicita periodicita = periodicitaRepository.findActiveByTestata(idTestata != null ? idTestata.intValue() : null);
+        GdpPeriodicita periodicita = periodicitaRepository.findActiveByTestata(idTestata);
     
         if (periodicita == null) {
             return new SospensioneResponse().message("MSG00001").giorniSospesi(0);

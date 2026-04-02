@@ -1,8 +1,8 @@
-package it.csipiemonte.gdp.gdporch.model.controller;
+package it.csipiemonte.gdp.gdporch.controller;
 
 import it.csipiemonte.gdp.gdporch.dto.DateRangeRequest;
 import it.csipiemonte.gdp.gdporch.dto.SospensioneResponse;
-import it.csipiemonte.gdp.gdporch.model.service.GdpSospensioneService;
+import it.csipiemonte.gdp.gdporch.service.GdpSospensioneService;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -22,7 +22,7 @@ public class GdpSospensioneController {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response postBoSospensioni(@PathParam("idTestata") Long idTestata, @Valid DateRangeRequest request) {
+    public Response postBoSospensioni(@PathParam("idTestata") Integer idTestata, @Valid DateRangeRequest request) {
         SospensioneResponse response = sospensioneService.sospendi(idTestata, request);
         return Response.ok(response).build();
     }
