@@ -28,24 +28,26 @@ INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_P
 (4, 5, 12, '6'); -- Solo sabato
 
 -- 4. Populating GDP_DATA_USCITA
+-- Tomorrow depends on current date. We ensure tomorrow exists for testing F02.
 INSERT INTO GDP_DATA_USCITA (ID_GDP_DATA_USCITA, FK_GDP_PERIODICITA, DT_INIZIO, DT_FINE, DATA_ATTESA, SOSPESA) VALUES
-(1, 1, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE, FALSE),
-(2, 2, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE, FALSE),
-(3, 3, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE, FALSE),
-(4, 4, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE, FALSE);
+(1, 1, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE + INTERVAL '1 day', FALSE),
+(2, 2, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE + INTERVAL '1 day', FALSE),
+(3, 3, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE + INTERVAL '1 day', FALSE),
+(4, 4, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE + INTERVAL '30 days', CURRENT_DATE + INTERVAL '1 day', FALSE);
 
 -- 5. Populating GDP_UTENTESFTP
+-- HOME_SFTP adjusted to 'upload' for local Docker testing (atmoz/sftp mapped folder)
 INSERT INTO GDP_UTENTESFTP (ID_GDP_UTENTESFTP, USERNAME, PASSWORD, HOME_SFTP, RIF_TESTATA, DIRETTORE, EMAIL, STATO) VALUES
-(1, 'sftp_gazzetta', 'pass_gazzetta_123', '/sftp/gazzetta_piemonte', '1', 'Dir. Gazzetta', 'sftp@gazzetta.it', 'ATTIVO'),
-(2, 'sftp_corriere', 'pass_corriere_123', '/sftp/corriere_torino', '2', 'Dir. Corriere', 'sftp@corriere.it', 'ATTIVO'),
-(3, 'sftp_cuneo', 'pass_cuneo_123', '/sftp/cuneo_news', '3', 'Dir. Cuneo', 'sftp@cuneonews.it', 'ATTIVO'),
-(4, 'sftp_cinema', 'pass_cinema_123', '/sftp/cinema_astigiano', '5', 'Dir. Cinema', 'sftp@cinema.it', 'ATTIVO');
+(1, 'sftp_gazzetta', 'pass_gazzetta_123', 'upload', '1', 'Dir. Gazzetta', 'sftp@gazzetta.it', 'ATTIVO'),
+(2, 'sftp_corriere', 'pass_corriere_123', 'upload', '2', 'Dir. Corriere', 'sftp@corriere.it', 'ATTIVO'),
+(3, 'sftp_cuneo', 'pass_cuneo_123', 'upload', '3', 'Dir. Cuneo', 'sftp@cuneonews.it', 'ATTIVO'),
+(4, 'sftp_cinema', 'pass_cinema_123', 'upload', '5', 'Dir. Cinema', 'sftp@cinema.it', 'ATTIVO');
 
 -- 6. Populating GDP_LOG
 INSERT INTO GDP_LOG (ID_GDP_LOG, FK_GDP_UTENTEFTP, FK_GDP_TESTATA, TIPO_ACQUISIZIONE, DT_ACQUISIZIONE, TOTALE_FILE_ACQUISITI, ESITO) VALUES
-(1, 1, 1, 'G', CURRENT_DATE, 2, 'OK'),
-(2, 2, 2, 'G', CURRENT_DATE, 1, 'OK'),
-(3, 3, 3, 'G', CURRENT_DATE, 1, 'ERROR');
+(1, 1, 1, 'G', CURRENT_TIMESTAMP, 2, 'OK'),
+(2, 2, 2, 'G', CURRENT_TIMESTAMP, 1, 'OK'),
+(3, 3, 3, 'G', CURRENT_TIMESTAMP, 1, 'ERROR');
 
 -- 7. Populating GDP_EDIZIONE
 INSERT INTO GDP_EDIZIONE (ID_GDP_EDIZIONE, FK_GDP_TESTATA, DATA_EDIZIONE, DATA_PUBBLICAZIONE, STATO, TOTALE_PAGINE) VALUES

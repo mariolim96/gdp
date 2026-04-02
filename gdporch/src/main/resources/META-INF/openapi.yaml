@@ -20,8 +20,6 @@ info:
   version: 1.0.0-rev2
   contact:
     name: CSI Piemonte — Team GDP
-  license:
-    name: Internal — CSI Piemonte
 
 servers:
   - url: https://gdp.cr.piemonte.it/api
