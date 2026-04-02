@@ -86,4 +86,188 @@ public class GdpTestata extends PanacheEntityBase {
 
     @Column(name = "LATITUDINE", precision = 11, scale = 9)
     public BigDecimal latitudine;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getNomeTestata() {
+        return nomeTestata;
+    }
+
+    public void setNomeTestata(String nomeTestata) {
+        this.nomeTestata = nomeTestata;
+    }
+
+    public String getCartellaTestata() {
+        return cartellaTestata;
+    }
+
+    public void setCartellaTestata(String cartellaTestata) {
+        this.cartellaTestata = cartellaTestata;
+    }
+
+    public Boolean getInvioEdizione() {
+        return invioEdizione;
+    }
+
+    public void setInvioEdizione(Boolean invioEdizione) {
+        this.invioEdizione = invioEdizione;
+    }
+
+    public Integer getStato() {
+        return stato;
+    }
+
+    public void setStato(Integer stato) {
+        this.stato = stato;
+    }
+
+    public LocalDate getDataStato() {
+        return dataStato;
+    }
+
+    public void setDataStato(LocalDate dataStato) {
+        this.dataStato = dataStato;
+    }
+
+    public LocalDate getCancellazione() {
+        return cancellazione;
+    }
+
+    public void setCancellazione(LocalDate cancellazione) {
+        this.cancellazione = cancellazione;
+    }
+
+    public Integer getCodTema() {
+        return codTema;
+    }
+
+    public void setCodTema(Integer codTema) {
+        this.codTema = codTema;
+    }
+
+    public String getTema() {
+        return tema;
+    }
+
+    public void setTema(String tema) {
+        this.tema = tema;
+    }
+
+    public String getSocEditrice() {
+        return socEditrice;
+    }
+
+    public void setSocEditrice(String socEditrice) {
+        this.socEditrice = socEditrice;
+    }
+
+    public String getEnteProponente() {
+        return enteProponente;
+    }
+
+    public void setEnteProponente(String enteProponente) {
+        this.enteProponente = enteProponente;
+    }
+
+    public Integer getAnnoFondazione() {
+        return annoFondazione;
+    }
+
+    public void setAnnoFondazione(Integer annoFondazione) {
+        this.annoFondazione = annoFondazione;
+    }
+
+    public String getPeriodoFreq() {
+        return periodoFreq;
+    }
+
+    public void setPeriodoFreq(String periodoFreq) {
+        this.periodoFreq = periodoFreq;
+    }
+
+    public String getPeriodoGg() {
+        return periodoGg;
+    }
+
+    public void setPeriodoGg(String periodoGg) {
+        this.periodoGg = periodoGg;
+    }
+
+    public String getDescrizione() {
+        return descrizione;
+    }
+
+    public void setDescrizione(String descrizione) {
+        this.descrizione = descrizione;
+    }
+
+    public String getWww() {
+        return www;
+    }
+
+    public void setWww(String www) {
+        this.www = www;
+    }
+
+    public String getMail() {
+        return mail;
+    }
+
+    public void setMail(String mail) {
+        this.mail = mail;
+    }
+
+    public String getProvincia() {
+        return provincia;
+    }
+
+    public void setProvincia(String provincia) {
+        this.provincia = provincia;
+    }
+
+    public String getComune() {
+        return comune;
+    }
+
+    public void setComune(String comune) {
+        this.comune = comune;
+    }
+
+    public String getIndirizzo() {
+        return indirizzo;
+    }
+
+    public void setIndirizzo(String indirizzo) {
+        this.indirizzo = indirizzo;
+    }
+
+    public String getCap() {
+        return cap;
+    }
+
+    public void setCap(String cap) {
+        this.cap = cap;
+    }
+
+    public BigDecimal getLongitudine() {
+        return longitudine;
+    }
+
+    public void setLongitudine(BigDecimal longitudine) {
+        this.longitudine = longitudine;
+    }
+
+    public BigDecimal getLatitudine() {
+        return latitudine;
+    }
+
+    public void setLatitudine(BigDecimal latitudine) {
+        this.latitudine = latitudine;
+    }
 }
