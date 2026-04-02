@@ -82,7 +82,7 @@ paths:
           description: Filter by specific testata ID
           schema:
             type: integer
-            format: int64
+            format: int32
       responses:
         '200':
           description: OK
@@ -402,7 +402,7 @@ paths:
         required: true
         schema:
           type: integer
-          format: int64
+          format: int32
     get:
       tags: [bo-sftp-utenti]
       operationId: getBoUtenteSftpById
@@ -512,7 +512,7 @@ paths:
           required: false
           schema:
             type: integer
-            format: int64
+            format: int32
         - name: dataDA
           in: query
           schema:
@@ -766,7 +766,7 @@ paths:
         required: true
         schema:
           type: integer
-          format: int64
+          format: int32
     post:
       tags: [bo-pagine]
       operationId: postBoOblio
@@ -857,7 +857,7 @@ paths:
           in: query
           schema:
             type: integer
-            format: int64
+            format: int32
         - name: areaTematica
           in: query
           schema:
@@ -929,7 +929,7 @@ paths:
           in: query
           schema:
             type: integer
-            format: int64
+            format: int32
         - name: areaTematica
           in: query
           schema:
@@ -1326,7 +1326,7 @@ paths:
         required: true
         schema:
           type: integer
-          format: int64
+          format: int32
     delete:
       tags: [fo-preferiti]
       operationId: deleteFoPreferito
@@ -1364,28 +1364,28 @@ components:
       required: true
       schema:
         type: integer
-        format: int64
+        format: int32
     idLog:
       name: idLog
       in: path
       required: true
       schema:
         type: integer
-        format: int64
+        format: int32
     idEdizione:
       name: idEdizione
       in: path
       required: true
       schema:
         type: integer
-        format: int64
+        format: int32
     idFascicolo:
       name: idFascicolo
       in: path
       required: true
       schema:
         type: integer
-        format: int64
+        format: int32
 
   responses:
     BadRequest:
@@ -1494,7 +1494,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
           example: 1
         nomeTestata:
           type: string
@@ -1524,7 +1524,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
           example: 1
         nomeTestata:
           type: string
@@ -1532,7 +1532,10 @@ components:
         cartellaTestata:
           type: string
         stato:
-          type: string
+          type: integer
+          description: |
+            0 = attiva, 1 = storica. Maps to GDP_TESTATA.STATO.
+          example: 0
         cancellazione:
           type: string
         codToma:
@@ -1573,7 +1576,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
         provincia:
@@ -1592,7 +1595,9 @@ components:
         periodoAl:
           type: string
         stato:
-          type: string
+          type: integer
+          description: 0 = attiva, 1 = storica
+          example: 0
 
     # ── PERIODICITA ──────────────────────────────────────────
     Periodicita:
@@ -1601,11 +1606,11 @@ components:
       properties:
         idPeriodicita:
           type: integer
-          format: int64
+          format: int32
           example: 1
         idTestata:
           type: integer
-          format: int64
+          format: int32
           example: 1
         mensilita:
           type: integer
@@ -1652,7 +1657,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
         cartellaTestata:
           type: string
           description: Added in SFU-01 v2
@@ -1690,10 +1695,10 @@ components:
       properties:
         id:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         username:
           type: string
         homeFtp:
@@ -1716,7 +1721,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
         username:
           type: string
           minLength: 3
@@ -1755,13 +1760,13 @@ components:
       properties:
         idLog:
           type: integer
-          format: int64
+          format: int32
         idUtenteSFTP:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
           example: La Sentinella del Canavese
@@ -1811,10 +1816,10 @@ components:
       properties:
         idLog:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
         tipoEdizione:
@@ -1847,10 +1852,10 @@ components:
       properties:
         idLog:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
           example: La Sentinella del Canavese
@@ -1878,16 +1883,16 @@ components:
           $ref: '#/components/schemas/TipoEdizione'
         idEdizione:
           type: integer
-          format: int64
+          format: int32
         primaPagina:
-          type: string
-          enum: [SI, NO]
+          type: boolean
+          example: true
         fileXML:
-          type: string
-          enum: ['true', 'false']
+          type: boolean
+          example: true
         fileZIP:
-          type: string
-          enum: ['true', 'false']
+          type: boolean
+          example: true
         nroPagAcq:
           type: integer
         nroPagOK:
@@ -1985,7 +1990,7 @@ components:
       properties:
         idPagina:
           type: integer
-          format: int64
+          format: int32
         oblio:
           type: string
           maxLength: 256
@@ -2003,13 +2008,13 @@ components:
       properties:
         idPagina:
           type: integer
-          format: int64
+          format: int32
         idEdizione:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
         dataEdizione:
@@ -2049,7 +2054,7 @@ components:
       properties:
         idEdizione:
           type: integer
-          format: int64
+          format: int32
         dataEdizione:
           type: string
           format: date
@@ -2083,7 +2088,7 @@ components:
       properties:
         idPagina:
           type: integer
-          format: int64
+          format: int32
         numPagina:
           type: integer
         filePdf:
@@ -2102,7 +2107,7 @@ components:
           properties:
             idTestata:
               type: integer
-              format: int64
+              format: int32
             nomeTestata:
               type: string
             pagine:
@@ -2127,7 +2132,7 @@ components:
           type: array
           items:
             type: integer
-            format: int64
+            format: int32
           minItems: 1
           maxItems: 500
           example: [1, 2, 3, 15, 16]
@@ -2140,7 +2145,7 @@ components:
       properties:
         idFascicolo:
           type: integer
-          format: int64
+          format: int32
           example: 42
         temporaneo:
           type: boolean
@@ -2160,13 +2165,13 @@ components:
           type: array
           items:
             type: integer
-            format: int64
+            format: int32
           example: [17, 18]
         rimuovi:
           type: array
           items:
             type: integer
-            format: int64
+            format: int32
           example: [3]
 
     FascicoloDetail:
@@ -2175,7 +2180,7 @@ components:
       properties:
         idFascicolo:
           type: integer
-          format: int64
+          format: int32
         titolo:
           type: string
           maxLength: 128
@@ -2201,7 +2206,7 @@ components:
           description: List of page IDs in the fascicolo (ordered by POSIZIONE)
           items:
             type: integer
-            format: int64
+            format: int32
 
     FascicoloList:
       type: object
@@ -2222,7 +2227,7 @@ components:
           enum: [testata, edizione]
         idRiferimento:
           type: integer
-          format: int64
+          format: int32
           example: 42
 
     Preferito:
@@ -2231,13 +2236,13 @@ components:
       properties:
         id:
           type: integer
-          format: int64
+          format: int32
         tipo:
           type: string
           enum: [testata, edizione]
         idRiferimento:
           type: integer
-          format: int64
+          format: int32
         nomeRiferimento:
           type: string
 
