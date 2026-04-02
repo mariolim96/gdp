@@ -13,7 +13,7 @@ public class GdpUtenteWeb extends PanacheEntityBase {
 
     @Id
     @Column(name = "ID_GDP_UTENTEWEB")
-    public Long id;
+    public Integer id;
 
     @Column(name = "CODICE_FISCALE", nullable = false, length = 32)
     public String codiceFiscale;

@@ -14,13 +14,13 @@ public class GdpCodaCaricamento extends PanacheEntityBase {
 
     @Id
     @Column(name = "ID_GDP_CODA_CARICAMENTO")
-    public Long id;
+    public Integer id;
 
     @Column(name = "DT_INSERIM_IN_CODA", nullable = false)
     public LocalDate dataInserimento;
 
     @Column(name = "FK_GDP_LOG_EDIZIONE", nullable = false)
-    public Long fkGdpLogEdizione;
+    public Integer fkGdpLogEdizione;
 
     @Column(name = "NRO_TENTATIVO", nullable = false)
     public Integer nroTentativo = 0;

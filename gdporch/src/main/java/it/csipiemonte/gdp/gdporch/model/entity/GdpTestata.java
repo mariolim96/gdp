@@ -14,7 +14,7 @@ public class GdpTestata extends PanacheEntityBase {
 
     @Id
     @Column(name = "ID_GDP_TESTATA")
-    public Long id;
+    public Integer id;
 
     @Column(name = "NOME_TESTATA", nullable = false, length = 256)
     public String nomeTestata;

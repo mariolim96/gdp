@@ -13,13 +13,13 @@ public class GdpLog extends PanacheEntityBase {
 
     @Id
     @Column(name = "ID_GDP_LOG")
-    public Long id;
+    public Integer id;
 
     @Column(name = "FK_GDP_UTENTEFTP", nullable = false)
-    public Long fkGdpUtenteFtp;
+    public Integer fkGdpUtenteFtp;
 
     @Column(name = "FK_GDP_TESTATA", nullable = false)
-    public Long fkGdpTestata;
+    public Integer fkGdpTestata;
 
     @Column(name = "TIPO_ACQUISIZIONE", nullable = false, length = 16)
     public String tipoAcquisizione; // G = giornaliera S = storica

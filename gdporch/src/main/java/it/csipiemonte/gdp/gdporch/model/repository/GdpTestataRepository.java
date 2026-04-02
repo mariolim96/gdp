@@ -1,13 +1,13 @@
 package it.csipiemonte.gdp.gdporch.model.repository;
 
 import it.csipiemonte.gdp.gdporch.model.entity.GdpTestata;
-import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 import java.util.Optional;
 
 @ApplicationScoped
-public class GdpTestataRepository implements PanacheRepository<GdpTestata> {
+public class GdpTestataRepository implements PanacheRepositoryBase<GdpTestata, Integer> {
 
     public Optional<GdpTestata> findByCartellaTestata(String cartellaTestata) {
         return find("cartellaTestata", cartellaTestata).firstResultOptional();

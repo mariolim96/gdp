@@ -85,8 +85,37 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5-mockito</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>1.19.7</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>1.19.7</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>1.19.7</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock-standalone</artifactId>
+      <version>3.5.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -159,7 +188,7 @@
           <generatorName>jaxrs-spec</generatorName>
           <apiPackage>it.csipiemonte.gdp.gdporch.api</apiPackage>
 
-          <modelPackage>it.csipiemonte.gdp.gdporch..dto</modelPackage>
+          <modelPackage>it.csipiemonte.gdp.gdporch.dto</modelPackage>
           <generateAliasAsModel>true</generateAliasAsModel>
           <skipValidateSpec>true</skipValidateSpec>
           <configOptions>
