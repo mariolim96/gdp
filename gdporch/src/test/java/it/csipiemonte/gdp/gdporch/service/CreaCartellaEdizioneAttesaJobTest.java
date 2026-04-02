@@ -15,6 +15,7 @@ import it.csipiemonte.gdp.sftp.SftpClientProducer;
 import it.csipiemonte.gdp.sftp.SftpSession;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.SftpException;
+import it.csipiemonte.gdp.gdporch.MockBeansTestProfile;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
