@@ -104,15 +104,11 @@ public class CreaCartellaEdizioneAttesaJob {
                 return false;
             }
 
-            String homeSftp = utenteSftp.homeSftp;
             String dataStr = dataUscita.dataAttesa.format(DATE_FORMATTER);
 
-            // Costruiamo il percorso: [prefix]/<homeSftp>/<cartellaTestata>/<dataStr>
-            // Rimuoviamo eventuali slash iniziali da homeSftp se usiamo un prefisso
-            String sanitizedHome = (sftpRootPrefix != null && !sftpRootPrefix.isEmpty() && homeSftp.startsWith("/")) 
-                                    ? homeSftp.substring(1) : homeSftp;
-            
-            String fullPath = String.format("%s%s/%s/%s", sftpRootPrefix, sanitizedHome, cartellaTestata, dataStr);
+            // Costruiamo il percorso: [prefix]/<cartellaTestata>/<dataStr>
+            // Esempio: flusso_regolare/la-sentinella-del-canavese/2024-01-15
+            String fullPath = String.format("%s%s/%s", sftpRootPrefix, cartellaTestata, dataStr);
             
             LOG.infof("Creazione cartella SFTP: %s", fullPath);
             createRecursiveDir(channel, fullPath);
