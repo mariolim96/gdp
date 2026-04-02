@@ -24,7 +24,7 @@ public class GdpSospensioneServiceImpl implements GdpSospensioneService {
     
     @Override
     @Transactional
-    public SospensioneResponse sospendi(Long idTestata, DateRangeRequest request) {
+    public SospensioneResponse sospendi(Integer idTestata, DateRangeRequest request) {
     
         // Validation
         if (request.getDataInizio() == null || request.getDataFine() == null || idTestata == null) {
@@ -37,7 +37,7 @@ public class GdpSospensioneServiceImpl implements GdpSospensioneService {
     
         // 1. Get Periodicita
         // Search for active periodicity (dataFineValidita IS NULL)
-        GdpPeriodicita periodicita = periodicitaRepository.findActiveByTestata(idTestata != null ? idTestata.intValue() : null);
+        GdpPeriodicita periodicita = periodicitaRepository.findActiveByTestata(idTestata);
     
         if (periodicita == null) {
             return new SospensioneResponse().message("MSG00001").giorniSospesi(0);
