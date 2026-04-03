@@ -20,4 +20,8 @@ public class GdpTestataRepository implements PanacheRepositoryBase<GdpTestata, I
     public List<GdpTestata> findByProvincia(String provincia) {
         return list("provincia", provincia);
     }
+
+    public List<GdpTestata> findByCartella(String cartellaTestata) {
+        return list("cartellaTestata", cartellaTestata);
+    }
 }

@@ -45,7 +45,7 @@ public class CreaCartellaEdizioneAttesaJob {
     @org.eclipse.microprofile.config.inject.ConfigProperty(name = "sftp.root.prefix", defaultValue = "")
     String sftpRootPrefix;
 
-    @Scheduled(cron = "0/10 * * * * ?", identity = "F02-creaCartellaDomani")
+    //@Scheduled(cron = "0/10 * * * * ?", identity = "F02-creaCartellaDomani")
     @Transactional
     public void execute() {
         LOG.info("Inizio job F02 - creaCartellaEdizioneAttesa");
