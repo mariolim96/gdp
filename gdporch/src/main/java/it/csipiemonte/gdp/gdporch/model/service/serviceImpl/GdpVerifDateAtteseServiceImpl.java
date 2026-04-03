@@ -6,16 +6,18 @@ import java.util.List;
 import it.csipiemonte.gdp.gdporch.model.dto.GdpVerifDateAtteseRequest;
 import it.csipiemonte.gdp.gdporch.model.dto.GdpVerifDateAtteseResponse;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpTestataRepository;
+import it.csipiemonte.gdp.gdporch.model.service.GdpVerifDateAtteseService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 @ApplicationScoped
-public class GdpVerifDateAtteseServiceImpl {
+public class GdpVerifDateAtteseServiceImpl implements GdpVerifDateAtteseService {
 
     @Inject
     GdpTestataRepository gdpTestataRepository;
 
+    @Override
     @Transactional
     public GdpVerifDateAtteseResponse execute(GdpVerifDateAtteseRequest request) {
 
