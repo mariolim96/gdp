@@ -1486,7 +1486,10 @@ components:
           type: string
           format: date
           example: '2026-12-31'
-
+        idTestata:
+          type: integer
+          format: int32
+          nullable: true
     # ── TESTATE ──────────────────────────────────────────────
     TestataSummary:
       type: object
@@ -1613,8 +1616,9 @@ components:
           format: int32
           example: 1
         mensilita:
-          type: integer
-          example: 1
+          type: number
+          format: double
+          example: 0.5
           description: |
             Monthly interval as integer (DB: GDP_PERIODICITA.MENSILITA integer).
             0 = sub-monthly weekly pattern.
