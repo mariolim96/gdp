@@ -19,7 +19,18 @@ INSERT INTO GDP_TESTATA (ID_GDP_TESTATA, NOME_TESTATA, CARTELLA_TESTATA, INVIO_E
 (3, 'Cuneo News', 'cuneo-news', TRUE, 0, 2, 'CN', 'Informazioni sulla pubblica amministrazione del cuneese'),
 (4, 'Novara Lavoro', 'novara-lavoro', FALSE, 1, 3, 'NO', 'Edizione storica sulle opportunita lavorative a Novara'),
 (5, 'Cinema Astigiano', 'cinema-astigiano', TRUE, 0, 4, 'AT', 'Tutto sul mondo del cinema nella provincia di Asti');
+--inserimenti per testare il calcolo date
+-- TESTATA 1 → Caso A mensile
+INSERT INTO gdp_testata (id_gdp_testata, nome_testata, invio_edizione, stato, cod_tema, provincia)
+VALUES (6, 'Testata Mensile', TRUE, 1, 1, 'TO');
 
+-- TESTATA 2 → Caso B settimanale
+INSERT INTO gdp_testata (id_gdp_testata, nome_testata, invio_edizione, stato, cod_tema, provincia)
+VALUES (7, 'Testata Settimanale', TRUE, 1, 1, 'TO');
+
+-- TESTATA 3 → Caso B quotidiano
+INSERT INTO gdp_testata (id_gdp_testata, nome_testata, invio_edizione, stato, cod_tema, provincia)
+VALUES (8, 'Testata Quotidiana', TRUE, 1, 1, 'TO');
 
 -- 3. Populating GDP_PERIODICITA
 INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_PERIODICITA) VALUES
@@ -27,6 +38,18 @@ INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_P
 (2, 2, 12, '1,2,3,4,5,6,7'),
 (3, 3, 12, '1,3,5'), -- Lunedi, Mercoledi, Venerdi
 (4, 5, 12, '6'); -- Solo sabato
+--Inserimenti per testare  Calcolo Date Uscite
+-- PERIODICITA TESTATA 6 → Mensile (caso A)
+INSERT INTO gdp_periodicita (id_gdp_periodicita, fk_gdp_testata, mensilita, gg_periodicita)
+VALUES (100, 6, 1, 'G01');  -- esce il primo giorno del mese
+
+-- PERIODICITA TESTATA 7 → Settimanale (caso B)
+INSERT INTO gdp_periodicita (id_gdp_periodicita, fk_gdp_testata, mensilita, gg_periodicita)
+VALUES (101, 7, 0, '1WS3');  -- ogni mercoledì
+
+-- PERIODICITA TESTATA 8 → Quotidiana (caso B)
+INSERT INTO gdp_periodicita (id_gdp_periodicita, fk_gdp_testata, mensilita, gg_periodicita)
+VALUES (102, 8, 0, '1WS0');  -- tutti i giorni
 
 -- 4. Populating GDP_DATA_USCITA
 -- Tomorrow depends on current date. We ensure tomorrow exists for testing F02.
