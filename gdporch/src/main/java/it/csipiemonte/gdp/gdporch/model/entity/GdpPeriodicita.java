@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
 @Table(name = "GDP_PERIODICITA")
@@ -92,5 +93,30 @@ public class GdpPeriodicita extends PanacheEntityBase {
 
     public void setFineSospensione(LocalDate fineSospensione) {
         this.fineSospensione = fineSospensione;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        GdpPeriodicita that = (GdpPeriodicita) o;
+        return Objects.equals(id, that.id) && Objects.equals(fkGdpTestata, that.fkGdpTestata) && Objects.equals(mensilita, that.mensilita) && Objects.equals(ggPeriodicita, that.ggPeriodicita) && Objects.equals(dataFineValidita, that.dataFineValidita) && Objects.equals(inizioSospensione, that.inizioSospensione) && Objects.equals(fineSospensione, that.fineSospensione);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, fkGdpTestata, mensilita, ggPeriodicita, dataFineValidita, inizioSospensione, fineSospensione);
+    }
+
+    @Override
+    public String toString() {
+        return "GdpPeriodicita{" +
+                "id=" + id +
+                ", fkGdpTestata=" + fkGdpTestata +
+                ", mensilita=" + mensilita +
+                ", ggPeriodicita='" + ggPeriodicita + '\'' +
+                ", dataFineValidita=" + dataFineValidita +
+                ", inizioSospensione=" + inizioSospensione +
+                ", fineSospensione=" + fineSospensione +
+                '}';
     }
 }
