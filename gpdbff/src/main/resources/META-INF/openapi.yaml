@@ -20,8 +20,6 @@ info:
   version: 1.0.0-rev2
   contact:
     name: CSI Piemonte — Team GDP
-  license:
-    name: Internal — CSI Piemonte
 
 servers:
   - url: https://gdp.cr.piemonte.it/api
@@ -46,6 +44,8 @@ tags:
     description: Front Office — Fascicoli (UC — Scenario 7)
   - name: fo-preferiti
     description: Front Office — Favourites (UC — Scenario 7)
+  - name: internal-acquisizioni
+    description: Internal — Acquisition Services (Async/Job triggered)
 
 security:
   - bearerAuth: []
@@ -54,7 +54,6 @@ security:
 # PATHS
 # ─────────────────────────────────────────────────────────────
 paths:
-
   # ── BACK OFFICE — TESTATE ──────────────────────────────────
 
   /bo/testate:
@@ -84,7 +83,7 @@ paths:
           description: Filter by specific testata ID
           schema:
             type: integer
-            format: int64
+            format: int32
       responses:
         '200':
           description: OK
@@ -404,7 +403,7 @@ paths:
         required: true
         schema:
           type: integer
-          format: int64
+          format: int32
     get:
       tags: [bo-sftp-utenti]
       operationId: getBoUtenteSftpById
@@ -514,7 +513,7 @@ paths:
           required: false
           schema:
             type: integer
-            format: int64
+            format: int32
         - name: dataDA
           in: query
           schema:
@@ -759,6 +758,121 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  # ── INTERNAL SERVICES ──────────────────────────────────────
+
+  /api/internal/acquisizioni/{idLog}/valida:
+    parameters:
+      - $ref: '#/components/parameters/idLog'
+    post:
+      tags: [internal-acquisizioni]
+      operationId: postInternalAcquisizioneValida
+      summary: Internal trigger for F04 - FTPregolare.ctrlEdizioneAcquisita
+      description: |
+        Called asynchronously by F03. Validates acquired edition.
+        No security required (internal network).
+      parameters:
+        - name: idTestata
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: cartellaTestata
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: dataEdizione
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericProcessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/internal/testate/{idTestata}/edizioni/inserisci:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+    post:
+      tags: [internal-acquisizioni]
+      operationId: postInternalEdizioneInserisci
+      summary: Internal trigger for F08 - DB.insEdizione
+      description: |
+        Inserts or updates edition and page records in DB.
+        Called by F04 (periodic) or F07 (historical).
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: dataEdizione
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: idLog
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EdizioneInsertResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/internal/testate/{idTestata}/edizioni/{idEdizione}/trasmetti:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+      - $ref: '#/components/parameters/idEdizione'
+    post:
+      tags: [internal-acquisizioni]
+      operationId: postInternalEdizioneTrasmetti
+      summary: Internal trigger for F09 - DAMtrasmissione.creaXMLEdizione
+      description: |
+        Generates XML metadata + .zip package for DAM transmission.
+        Followed by F10 (asynchronous).
+      parameters:
+        - name: idLog
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: priorita
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XmlCreationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
   # ── BACK OFFICE — PAGINE / OBLIO ───────────────────────────
 
   /bo/pagine/{idPagina}/oblio:
@@ -768,7 +882,7 @@ paths:
         required: true
         schema:
           type: integer
-          format: int64
+          format: int32
     post:
       tags: [bo-pagine]
       operationId: postBoOblio
@@ -826,7 +940,7 @@ paths:
       summary: Full-text archive search
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb)
+        - {} # allows anonymous (utenteWeb)
       description: |
         Delegates to DAM LIBRA search API.
         Applies last-2-editions filter for utenteWeb:
@@ -859,7 +973,7 @@ paths:
           in: query
           schema:
             type: integer
-            format: int64
+            format: int32
         - name: areaTematica
           in: query
           schema:
@@ -896,7 +1010,7 @@ paths:
       summary: Advanced archive search
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb)
+        - {} # allows anonymous (utenteWeb)
       description: |
         Adds AND/OR/EXACT operator parameter over /fo/ricerca.
         Same visibility rules apply.
@@ -931,7 +1045,7 @@ paths:
           in: query
           schema:
             type: integer
-            format: int64
+            format: int32
         - name: areaTematica
           in: query
           schema:
@@ -970,7 +1084,7 @@ paths:
       summary: List consultable testate
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb)
+        - {} # allows anonymous (utenteWeb)
       description: Direct DB read from GDP_TESTATA.
       parameters:
         - name: provincia
@@ -1002,7 +1116,7 @@ paths:
       summary: Public testata data
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb)
+        - {} # allows anonymous (utenteWeb)
       description: Returns only public fields (name, description, province, periodicity). NOT SFTP config.
       responses:
         '200':
@@ -1023,7 +1137,7 @@ paths:
       summary: List editions of a testata
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb) — last-2-editions filter applied
+        - {} # allows anonymous (utenteWeb) — last-2-editions filter applied
       description: |
         Direct DB read from GDP_EDIZIONE.
         Applies last-2-editions filter for utenteWeb
@@ -1073,7 +1187,7 @@ paths:
       summary: Edition detail with page list and metadata
       security:
         - bearerAuth: []
-        - {}  # allows anonymous
+        - {} # allows anonymous
       description: |
         Direct DB read from GDP_EDIZIONE + GDP_PAGINA.
         If utenteWeb and edition is within last 2 → 403.
@@ -1104,7 +1218,7 @@ paths:
       summary: PDF stream of a specific page
       security:
         - bearerAuth: []
-        - {}  # allows anonymous
+        - {} # allows anonymous
       description: |
         Retrieves PDF from DAM LIBRA and streams to client.
         Uses chunked transfer encoding — no full in-memory buffering.
@@ -1150,7 +1264,7 @@ paths:
       summary: Create a new fascicolo
       security:
         - bearerAuth: []
-        - {}  # utenteWeb: temporary PDF; utentePrivilegiato: persisted
+        - {} # utenteWeb: temporary PDF; utentePrivilegiato: persisted
       description: |
         Assembles PDF from individual LIBRA pages using Apache PDFBox 3.x.
         - utenteWeb: PDF generated on-the-fly, not persisted. Returns base64 PDF.
@@ -1259,7 +1373,7 @@ paths:
       summary: Download fascicolo PDF
       security:
         - bearerAuth: []
-        - {}  # utenteWeb: on-the-fly PDF; utentePrivilegiato: saved PDF
+        - {} # utenteWeb: on-the-fly PDF; utentePrivilegiato: saved PDF
       description: |
         - utentePrivilegiato: serves saved PDF.
         - utenteWeb: generates PDF on-the-fly (page assembly).
@@ -1328,7 +1442,7 @@ paths:
         required: true
         schema:
           type: integer
-          format: int64
+          format: int32
     delete:
       tags: [fo-preferiti]
       operationId: deleteFoPreferito
@@ -1349,7 +1463,6 @@ paths:
 # COMPONENTS
 # ─────────────────────────────────────────────────────────────
 components:
-
   securitySchemes:
     bearerAuth:
       type: http
@@ -1366,28 +1479,28 @@ components:
       required: true
       schema:
         type: integer
-        format: int64
+        format: int32
     idLog:
       name: idLog
       in: path
       required: true
       schema:
         type: integer
-        format: int64
+        format: int32
     idEdizione:
       name: idEdizione
       in: path
       required: true
       schema:
         type: integer
-        format: int64
+        format: int32
     idFascicolo:
       name: idFascicolo
       in: path
       required: true
       schema:
         type: integer
-        format: int64
+        format: int32
 
   responses:
     BadRequest:
@@ -1422,7 +1535,6 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
 
   schemas:
-
     # ── ERROR ────────────────────────────────────────────────
     ErrorResponse:
       type: object
@@ -1496,7 +1608,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
           example: 1
         nomeTestata:
           type: string
@@ -1526,7 +1638,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
           example: 1
         nomeTestata:
           type: string
@@ -1534,7 +1646,10 @@ components:
         cartellaTestata:
           type: string
         stato:
-          type: string
+          type: integer
+          description: |
+            0 = attiva, 1 = storica. Maps to GDP_TESTATA.STATO.
+          example: 0
         cancellazione:
           type: string
         codToma:
@@ -1575,7 +1690,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
         provincia:
@@ -1594,7 +1709,9 @@ components:
         periodoAl:
           type: string
         stato:
-          type: string
+          type: integer
+          description: 0 = attiva, 1 = storica
+          example: 0
 
     # ── PERIODICITA ──────────────────────────────────────────
     Periodicita:
@@ -1603,11 +1720,11 @@ components:
       properties:
         idPeriodicita:
           type: integer
-          format: int64
+          format: int32
           example: 1
         idTestata:
           type: integer
-          format: int64
+          format: int32
           example: 1
         mensilita:
           type: integer
@@ -1654,7 +1771,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
         cartellaTestata:
           type: string
           description: Added in SFU-01 v2
@@ -1692,10 +1809,10 @@ components:
       properties:
         id:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         username:
           type: string
         homeFtp:
@@ -1718,7 +1835,7 @@ components:
       properties:
         idTestata:
           type: integer
-          format: int64
+          format: int32
         username:
           type: string
           minLength: 3
@@ -1757,13 +1874,13 @@ components:
       properties:
         idLog:
           type: integer
-          format: int64
+          format: int32
         idUtenteSFTP:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
           example: La Sentinella del Canavese
@@ -1784,7 +1901,7 @@ components:
           type: integer
         esito:
           type: string
-          example: "<MSG>Elaborazione OK</MSG>"
+          example: '<MSG>Elaborazione OK</MSG>'
           description: |
             Raw status string containing rendering tags mapping to UC-05:
             <MSG> = OK (white text, green background)
@@ -1809,14 +1926,22 @@ components:
 
     AcquisizioneRicercaSummary:
       type: object
-      required: [idLog, idTestata, nomeTestata, tipoEdizione, dataEdizione, dataAcquisizione]
+      required:
+        [
+          idLog,
+          idTestata,
+          nomeTestata,
+          tipoEdizione,
+          dataEdizione,
+          dataAcquisizione,
+        ]
       properties:
         idLog:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
         tipoEdizione:
@@ -1849,10 +1974,10 @@ components:
       properties:
         idLog:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
           example: La Sentinella del Canavese
@@ -1874,22 +1999,22 @@ components:
           type: integer
         esito:
           type: string
-          example: "<WRN>Avviso: NL – page003.pdf</WRN>"
+          example: '<WRN>Avviso: NL – page003.pdf</WRN>'
           description: Raw status string with rendering tags.
         tipoEdizioneCode:
           $ref: '#/components/schemas/TipoEdizione'
         idEdizione:
           type: integer
-          format: int64
+          format: int32
         primaPagina:
-          type: string
-          enum: [SI, NO]
+          type: boolean
+          example: true
         fileXML:
-          type: string
-          enum: ['true', 'false']
+          type: boolean
+          example: true
         fileZIP:
-          type: string
-          enum: ['true', 'false']
+          type: boolean
+          example: true
         nroPagAcq:
           type: integer
         nroPagOK:
@@ -1987,7 +2112,7 @@ components:
       properties:
         idPagina:
           type: integer
-          format: int64
+          format: int32
         oblio:
           type: string
           maxLength: 256
@@ -2005,13 +2130,13 @@ components:
       properties:
         idPagina:
           type: integer
-          format: int64
+          format: int32
         idEdizione:
           type: integer
-          format: int64
+          format: int32
         idTestata:
           type: integer
-          format: int64
+          format: int32
         nomeTestata:
           type: string
         dataEdizione:
@@ -2051,7 +2176,7 @@ components:
       properties:
         idEdizione:
           type: integer
-          format: int64
+          format: int32
         dataEdizione:
           type: string
           format: date
@@ -2085,7 +2210,7 @@ components:
       properties:
         idPagina:
           type: integer
-          format: int64
+          format: int32
         numPagina:
           type: integer
         filePdf:
@@ -2104,7 +2229,7 @@ components:
           properties:
             idTestata:
               type: integer
-              format: int64
+              format: int32
             nomeTestata:
               type: string
             pagine:
@@ -2129,7 +2254,7 @@ components:
           type: array
           items:
             type: integer
-            format: int64
+            format: int32
           minItems: 1
           maxItems: 500
           example: [1, 2, 3, 15, 16]
@@ -2142,7 +2267,7 @@ components:
       properties:
         idFascicolo:
           type: integer
-          format: int64
+          format: int32
           example: 42
         temporaneo:
           type: boolean
@@ -2162,13 +2287,13 @@ components:
           type: array
           items:
             type: integer
-            format: int64
+            format: int32
           example: [17, 18]
         rimuovi:
           type: array
           items:
             type: integer
-            format: int64
+            format: int32
           example: [3]
 
     FascicoloDetail:
@@ -2177,7 +2302,7 @@ components:
       properties:
         idFascicolo:
           type: integer
-          format: int64
+          format: int32
         titolo:
           type: string
           maxLength: 128
@@ -2203,7 +2328,7 @@ components:
           description: List of page IDs in the fascicolo (ordered by POSIZIONE)
           items:
             type: integer
-            format: int64
+            format: int32
 
     FascicoloList:
       type: object
@@ -2224,7 +2349,7 @@ components:
           enum: [testata, edizione]
         idRiferimento:
           type: integer
-          format: int64
+          format: int32
           example: 42
 
     Preferito:
@@ -2233,13 +2358,13 @@ components:
       properties:
         id:
           type: integer
-          format: int64
+          format: int32
         tipo:
           type: string
           enum: [testata, edizione]
         idRiferimento:
           type: integer
-          format: int64
+          format: int32
         nomeRiferimento:
           type: string
 
@@ -2251,3 +2376,40 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Preferito'
+
+    GenericProcessResponse:
+      type: object
+      required: [codice]
+      properties:
+        codice:
+          type: string
+          example: MSG00009
+          description: |
+            Process result code (MSG00009=OK, MSG00001=Date Anomaly, etc.)
+        messaggio:
+          type: string
+          example: Elaborazione OK
+          description: Human readable description or error detail.
+
+    EdizioneInsertResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericProcessResponse'
+        - type: object
+          required: [idEdizione]
+          properties:
+            idEdizione:
+              type: integer
+              format: int32
+              example: 12345
+              description: ID of the inserted or updated edition (GDP_EDIZIONE.ID_GDP_EDIZIONE).
+
+    XmlCreationResponse:
+      allOf:
+        - $ref: '#/components/schemas/GenericProcessResponse'
+        - type: object
+          required: [nomeFileCompresso]
+          properties:
+            nomeFileCompresso:
+              type: string
+              example: LaSentinellaDelCanavese.2026-03-01.zip
+              description: Generated ZIP filename deposited in the DAM staging area.
