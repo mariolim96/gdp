@@ -1,4 +1,4 @@
-package it.csipiemonte.gdp.gdporch.model.controller;
+package it.csipiemonte.gdp.gdporch.controller;
 
 import it.csipiemonte.gdp.gdporch.dto.DateRangeRequest;
 import it.csipiemonte.gdp.gdporch.dto.ResponseDTO;
