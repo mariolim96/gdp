@@ -24,7 +24,7 @@ public class GdpPeriodicita extends PanacheEntityBase {
     public Integer fkGdpTestata;
 
     @Column(name = "MENSILITA", nullable = false)
-    public Integer mensilita;
+    public Double mensilita;
 
     @Column(name = "GG_PERIODICITA", nullable = false, length = 128)
     public String ggPeriodicita;
@@ -54,11 +54,11 @@ public class GdpPeriodicita extends PanacheEntityBase {
         this.fkGdpTestata = fkGdpTestata;
     }
 
-    public Integer getMensilita() {
+    public Double getMensilita() {
         return mensilita;
     }
 
-    public void setMensilita(Integer mensilita) {
+    public void setMensilita(Double mensilita) {
         this.mensilita = mensilita;
     }
 
