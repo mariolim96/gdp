@@ -1,4 +1,4 @@
-package it.csipiemonte.gdp.gdporch.model.service.serviceImpl;
+package it.csipiemonte.gdp.gdporch.service.impl;
 
 import java.util.List;
 
@@ -8,7 +8,7 @@ import it.csipiemonte.gdp.gdporch.model.entity.GdpDataUscita;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpPeriodicita;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpDataUscitaRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpPeriodicitaRepository;
-import it.csipiemonte.gdp.gdporch.model.service.GdpSospensioneService;
+import it.csipiemonte.gdp.gdporch.service.GdpSospensioneService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
