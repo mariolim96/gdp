@@ -32,7 +32,7 @@ public class GdpVerifDateAtteseServiceImpl implements GdpVerifDateAtteseService 
                 request.idTestata);
 
         if (rows.isEmpty()) {
-            return new GdpVerifDateAtteseResponse("MSG00001", List.of());
+            return new GdpVerifDateAtteseResponse("MSG00001", "Nessun risultato trovato", List.of());
         }
 
         List<GdpVerifDateAtteseResponse.GdpResultItem> risultati = rows.stream()
@@ -43,6 +43,6 @@ public class GdpVerifDateAtteseServiceImpl implements GdpVerifDateAtteseService 
                         (Boolean) r[3]))
                 .toList();
 
-        return new GdpVerifDateAtteseResponse("MSG00009", risultati);
+        return new GdpVerifDateAtteseResponse("MSG00009", "Elaborazione completata correttamente", risultati);
     }
 }
