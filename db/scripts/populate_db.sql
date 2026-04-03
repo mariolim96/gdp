@@ -20,17 +20,23 @@ INSERT INTO GDP_TESTATA (ID_GDP_TESTATA, NOME_TESTATA, CARTELLA_TESTATA, INVIO_E
 (4, 'Novara Lavoro', 'novara-lavoro', FALSE, 1, 3, 'NO', 'Edizione storica sulle opportunita lavorative a Novara'),
 (5, 'Cinema Astigiano', 'cinema-astigiano', TRUE, 0, 4, 'AT', 'Tutto sul mondo del cinema nella provincia di Asti');
 --inserimenti per testare il calcolo date
--- TESTATA 1 → Caso A mensile
-INSERT INTO gdp_testata (id_gdp_testata, nome_testata, invio_edizione, stato, cod_tema, provincia)
-VALUES (6, 'Testata Mensile', TRUE, 1, 1, 'TO');
+--- TESTATA 1 → Caso A mensile
+INSERT INTO gdp_testata
+(id_gdp_testata, nome_testata, cartella_testata, invio_edizione, stato, cod_tema, provincia, descrizione)
+VALUES
+    (6,'Testata Mensile', 'testata-mensile',  TRUE, 1, 1, 'TO','Testata di esempio con uscita mensile per test calcolo periodicità');
 
 -- TESTATA 2 → Caso B settimanale
-INSERT INTO gdp_testata (id_gdp_testata, nome_testata, invio_edizione, stato, cod_tema, provincia)
-VALUES (7, 'Testata Settimanale', TRUE, 1, 1, 'TO');
+INSERT INTO gdp_testata
+(id_gdp_testata, nome_testata, cartella_testata, invio_edizione, stato, cod_tema, provincia, descrizione)
+VALUES
+    (7, 'Testata Settimanale', 'testata-settimanale', TRUE, 1, 1, 'TO', 'Testata di esempio con uscita settimanale per test calcolo uscite');
 
 -- TESTATA 3 → Caso B quotidiano
-INSERT INTO gdp_testata (id_gdp_testata, nome_testata, invio_edizione, stato, cod_tema, provincia)
-VALUES (8, 'Testata Quotidiana', TRUE, 1, 1, 'TO');
+INSERT INTO gdp_testata
+(id_gdp_testata, nome_testata, cartella_testata, invio_edizione, stato, cod_tema, provincia, descrizione)
+VALUES
+    (8,'Testata Quotidiana','testata-quotidiana', TRUE, 1, 1, 'TO', 'Testata di esempio con uscita quotidiana per simulazione completa');
 
 -- 3. Populating GDP_PERIODICITA
 INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_PERIODICITA) VALUES
