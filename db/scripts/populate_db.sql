@@ -20,6 +20,7 @@ INSERT INTO GDP_TESTATA (ID_GDP_TESTATA, NOME_TESTATA, CARTELLA_TESTATA, INVIO_E
 (4, 'Novara Lavoro', 'novara-lavoro', FALSE, 1, 3, 'NO', 'Edizione storica sulle opportunita lavorative a Novara'),
 (5, 'Cinema Astigiano', 'cinema-astigiano', TRUE, 0, 4, 'AT', 'Tutto sul mondo del cinema nella provincia di Asti');
 
+
 -- 3. Populating GDP_PERIODICITA
 INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_PERIODICITA) VALUES
 (1, 1, 12, '1,2,3,4,5,6,7'), -- Quotidiano

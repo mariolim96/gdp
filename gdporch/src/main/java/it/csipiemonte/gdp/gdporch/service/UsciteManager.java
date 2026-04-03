@@ -115,6 +115,8 @@ public class UsciteManager {
             GdpDataUscita u = new GdpDataUscita();
             u.fkGdpPeriodicita = p.id;
             u.dataAttesa = d;
+            u.dataInizio = start;
+            u.dataFine = end;
             u.sospesa = false;
 
             repo.persist(u);
