@@ -16,20 +16,21 @@ import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * F06 - FTPsaltuario.checkConsegnaStorico
  * * Questo servizio presidia l'area di "deposito storico" sul server SFTP.
  * Il flusso prevede:
- * 1. Identificazione delle cartelle di consegna (CONS_yyyy-mm-dd).
+ * 1. Identificazione degli utenti e delle relative cartelle di consegna (CONS_yyyy-mm-dd).
  * 2. Verifica dell'esistenza degli editori (testate) su database.
- * 3. Smistamento file: in 'tmp' per la lavorazione o in 'errata' per anomalie.
+ * 3. Smistamento file: in 'tmp' per la lavorazione o in 'errata' per anomalie,
+ * mantenendo la struttura utente/consegna.
  *
  * I messaggi MSG0000x seguono lo standard di tracciamento CSI.
  */
@@ -74,7 +75,8 @@ public class CheckConsegnaStoricoJob {
     // -------------------------------------------------------------------------
 
     /**
-     * Esecuzione ogni 15 minuti. SKIP evita sovrapposizioni se l'SFTP è lento.
+     * Esecuzione giornaliera (orario serale) o intervallata.
+     * SKIP evita sovrapposizioni se l'SFTP è lento.
      */
     @Scheduled(every = "15m", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     public void eseguiCheckConsegnaStorico() {
@@ -83,20 +85,35 @@ public class CheckConsegnaStoricoJob {
         try (SftpSession session = sftpProducer.connect()) {
             ChannelSftp sftp = session.getChannel();
 
-            // Filtriamo solo le cartelle che seguono il pattern CONS_...
-            List<String> consegne = elencaSottocartelle(sftp, saltuarioDir).stream()
-                    .filter(name -> name.matches(PATTERN_CONS))
-                    .toList();
+            // Recupero delle cartelle utente (es. /flusso_saltuario/utente1)
+            List<String> utenti = elencaSottocartelle(sftp, saltuarioDir);
 
-            if (consegne.isEmpty()) {
-                Log.infof("%s - Nessuna cartella di consegna trovata.", MSG_NESSUNA_CONS);
+            if (utenti.isEmpty()) {
+                Log.infof("%s - Nessuna cartella utente trovata.", MSG_NESSUNA_CONS);
                 return;
             }
 
-            // Cicliamo sulle giornate di consegna trovate.
-            // Se una cartella fallisce, il try-catch interno protegge le altre.
-            for (String nomeConsegna : consegne) {
-                elaboraCartellaConsegna(sftp, nomeConsegna);
+            boolean trovataAlmenoUnaConsegna = false;
+
+            for (String utente : utenti) {
+                String pathUtente = joinPath(saltuarioDir, utente);
+
+                List<String> consegne = elencaSottocartelle(sftp, pathUtente).stream()
+                        .filter(name -> name.matches(PATTERN_CONS))
+                        .toList();
+
+                if (!consegne.isEmpty()) {
+                    trovataAlmenoUnaConsegna = true;
+                }
+
+                for (String nomeConsegna : consegne) {
+                    elaboraCartellaConsegna(sftp, utente, nomeConsegna);
+                }
+            }
+
+            if (!trovataAlmenoUnaConsegna) {
+                Log.infof("%s - Nessuna cartella di consegna trovata.", MSG_NESSUNA_CONS);
+                return;
             }
 
             Log.infof("%s - Operazione conclusa correttamente.", MSG_OK);
@@ -107,29 +124,29 @@ public class CheckConsegnaStoricoJob {
     }
 
     // -------------------------------------------------------------------------
-    // Step 1 - Elaborazione singola cartella CONS_yyyy-mm-dd
+    // Step 1 - Elaborazione singola cartella CONS_yyyy-mm-dd di un utente
     // -------------------------------------------------------------------------
 
-    private void elaboraCartellaConsegna(ChannelSftp sftp, String nomeConsegna) {
-        String pathConsegna = joinPath(saltuarioDir, nomeConsegna);
+    private void elaboraCartellaConsegna(ChannelSftp sftp, String utente, String nomeConsegna) {
+        String pathConsegna = joinPath(saltuarioDir, utente, nomeConsegna);
         try {
             List<ChannelSftp.LsEntry> entries = elencaSottocartelleEntry(sftp, pathConsegna);
 
             if (entries.isEmpty()) {
-                Log.warnf("La consegna [%s] è presente ma vuota.", nomeConsegna);
+                Log.warnf("La consegna [%s/%s] è presente ma vuota.", utente, nomeConsegna);
                 return;
             }
 
-            // Ogni entry qui rappresenta una cartella editore
+            // Ogni entry qui rappresenta una cartella editore/testata
             for (ChannelSftp.LsEntry entry : entries) {
-                elaboraTestata(sftp, entry, nomeConsegna);
+                elaboraTestata(sftp, entry, utente, nomeConsegna);
             }
 
             // Una volta svuotata dai file validi/errati, proviamo a rimuovere la CONS_
             rimuoviConsegnaSeVuota(sftp, pathConsegna, nomeConsegna);
 
         } catch (Exception e) {
-            Log.errorf("Impossibile processare la consegna [%s]: %s", nomeConsegna, e.getMessage(), e);
+            Log.errorf("Impossibile processare la consegna [%s] per l'utente [%s]: %s", nomeConsegna, utente, e.getMessage(), e);
         }
     }
 
@@ -137,25 +154,28 @@ public class CheckConsegnaStoricoJob {
     // Step 2 - Elaborazione singola testata (editore)
     // -------------------------------------------------------------------------
 
-    private void elaboraTestata(ChannelSftp sftp, ChannelSftp.LsEntry entry, String nomeConsegna) {
+    private void elaboraTestata(ChannelSftp sftp, ChannelSftp.LsEntry entry, String utente, String nomeConsegna) {
         String nomeCartella = entry.getFilename();
+        // Timestamp reale della cartella SFTP (yyyy-MM-dd HH:mm:ss)
         String dataCartella = formattaMTime(entry.getAttrs().getMTime());
-        LocalDate oggi      = LocalDate.now();
 
         // Verifichiamo se la cartella editore è censita nel nostro sistema
         List<GdpTestata> testate = gdpTestataRepository.findByCartella(nomeCartella);
 
         if (testate.size() > 1) {
-            Log.errorf("%s - Trovate più testate per la cartella [%s].", MSG_DUPLICATO, nomeCartella);
-            gestisciAnomalia(sftp, nomeConsegna, nomeCartella, oggi, MSG_DUPLICATO);
+            String ids = testate.stream()
+                    .map(t -> String.valueOf(t.id))
+                    .collect(Collectors.joining(","));
+            Log.errorf("%s - Trovate più testate per la cartella [%s]: %s", MSG_DUPLICATO, nomeCartella, ids);
+            gestisciAnomalia(sftp, utente, nomeConsegna, nomeCartella, dataCartella, MSG_DUPLICATO);
 
         } else if (testate.isEmpty()) {
             Log.errorf("%s - Nessuna testata trovata per la cartella [%s].", MSG_NON_TROVATO, nomeCartella);
-            gestisciAnomalia(sftp, nomeConsegna, nomeCartella, oggi, MSG_NON_TROVATO);
+            gestisciAnomalia(sftp, utente, nomeConsegna, nomeCartella, dataCartella, MSG_NON_TROVATO);
 
         } else {
             // Caso OK: testata trovata univocamente
-            procediConSuccesso(sftp, testate.get(0), nomeConsegna, nomeCartella, dataCartella, oggi);
+            procediConSuccesso(sftp, testate.get(0), utente, nomeConsegna, nomeCartella, dataCartella);
         }
     }
 
@@ -167,48 +187,54 @@ public class CheckConsegnaStoricoJob {
      * Sposta la cartella in 'errata'. In caso di testata mancante o duplicata,
      * usiamo l'ID 0 (testata tecnica) per poter salvare il log rispettando i vincoli DB.
      */
-    private void gestisciAnomalia(ChannelSftp sftp, String consegna, String cartella,
-                                  LocalDate oggi, String msgErrore) {
-        String source = joinPath(saltuarioDir, consegna, cartella);
-        String target = joinPath(errataDir, consegna, cartella);
+    private void gestisciAnomalia(ChannelSftp sftp, String utente, String consegna, String cartella,
+                                  String dataCartella, String msgErrore) {
+        String source = joinPath(saltuarioDir, utente, consegna, cartella);
+        String target = joinPath(errataDir, utente, consegna, cartella);
 
         int fileCount = contaFileInCartella(sftp, source);
         spostaCartella(sftp, source, target);
-        inserisciGdpLog(0, oggi, fileCount, msgErrore);
+        inserisciGdpLog(0, dataCartella, fileCount, msgErrore);
     }
 
     /**
      * Sposta la cartella in 'tmp' per la futura elaborazione F07.
      */
-    private void procediConSuccesso(ChannelSftp sftp, GdpTestata testata, String consegna,
-                                    String cartella, String dataCartella, LocalDate oggi) {
-        String source = joinPath(saltuarioDir, consegna, cartella);
-        String target = joinPath(tmpDir, consegna, cartella);
+    private void procediConSuccesso(ChannelSftp sftp, GdpTestata testata, String utente, String consegna,
+                                    String cartella, String dataCartella) {
+        String source = joinPath(saltuarioDir, utente, consegna, cartella);
+        String target = joinPath(tmpDir, utente, consegna, cartella);
 
         int fileCount = contaFileInCartella(sftp, source);
         spostaCartella(sftp, source, target);
-        inserisciGdpLog(testata.id, oggi, fileCount, MSG_OK);
+        inserisciGdpLog(testata.id, dataCartella, fileCount, MSG_OK);
 
-        Log.infof("Cartella [%s] (ID: %d) smistata correttamente in TMP.", cartella, testata.id);
+        Log.infof("Cartella [%s] (ID: %d) dell'utente [%s] smistata correttamente in TMP.", cartella, testata.id, utente);
 
-        // TODO F07: Invocare qui il servizio di elaborazione una volta che sarà disponibile nel progetto.
+        // TODO F07: Invocare qui il servizio di elaborazione una volta disponibile.
     }
 
     // -------------------------------------------------------------------------
     // Persistenza
     // -------------------------------------------------------------------------
 
+    /**
+     * Registra l'esito dell'operazione su GDP_LOG.
+     * Converte la stringa timestamp dell'SFTP in OffsetDateTime per il database.
+     */
     @Transactional
-    public void inserisciGdpLog(Integer fkTestata, LocalDate dataAcq, Integer totaleFile, String esito) {
+    public void inserisciGdpLog(Integer fkTestata, String dataCartella, Integer totaleFile, String esito) {
         try {
+            LocalDateTime ldt = LocalDateTime.parse(dataCartella, DF_CARTELLA);
+
             AcquisizioneDetail dto = new AcquisizioneDetail();
             dto.setIdTestata(fkTestata);
             dto.setNroTotFile(totaleFile);
             dto.setEsito(esito);
             dto.setTipoAcquisizione(AcquisizioneDetail.TipoAcquisizioneEnum.S);
-            dto.setDataAcquisizione(dataAcq.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime());
+            dto.setDataAcquisizione(ldt.atZone(ZoneId.systemDefault()).toOffsetDateTime());
 
-            // Prepariamo l'utente SFTP per il log (usiamo l'ID predefinito)
+            // Prepariamo l'utente SFTP per il log (usiamo l'ID predefinito da config)
             GdpUtenteSftp utente = new GdpUtenteSftp();
             utente.id = defaultUtenteFtpId;
 
@@ -263,7 +289,7 @@ public class CheckConsegnaStoricoJob {
             try {
                 sftp.mkdir(currentPath.toString());
             } catch (Exception ignored) {
-                // Se esiste già, JSch lancia eccezione: la ignoriamo.
+                // Se esiste già, la ignoriamo.
             }
         }
     }
@@ -312,7 +338,7 @@ public class CheckConsegnaStoricoJob {
     }
 
     /**
-     * Trasforma il timestamp SFTP in data leggibile per l'elaborazione.
+     * Trasforma il timestamp SFTP (mTime) in data leggibile per l'elaborazione.
      */
     private String formattaMTime(int mTime) {
         return LocalDateTime
