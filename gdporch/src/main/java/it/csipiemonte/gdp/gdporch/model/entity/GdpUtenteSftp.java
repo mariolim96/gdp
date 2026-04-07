@@ -8,6 +8,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import it.csipiemonte.gdp.gdporch.model.enums.StatoUtenteSftp;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 
 @Entity
 @Table(name = "GDP_UTENTESFTP")
@@ -40,6 +43,7 @@ public class GdpUtenteSftp extends PanacheEntityBase {
     @Column(name = "EMAIL", length = 50)
     public String email;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "STATO", length = 50)
-    public String stato;
+    public StatoUtenteSftp stato;
 }
