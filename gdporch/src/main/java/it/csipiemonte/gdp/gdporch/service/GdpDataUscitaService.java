@@ -142,7 +142,7 @@ public class GdpDataUscitaService {
     }
 
      // Incrementa il mese corrente in base alla mensilità.
-    private LocalDate incrementaMese(LocalDate current, Double mensilita) {
+    private LocalDate incrementaMese(LocalDate current, Integer mensilita) {
         long mesi = Math.max(1, Math.round(mensilita));
         return current.plusMonths(mesi);
     }
