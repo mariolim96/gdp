@@ -12,7 +12,7 @@ import it.csipiemonte.gdp.gdporch.service.ConfigDTEdizioneAttesaService;
 import it.csipiemonte.gdp.gdporch.service.VerifDateAtteseService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
-import jakarta.ejb.Asynchronous;
+
 
 import java.util.List;
 import java.util.Map;
