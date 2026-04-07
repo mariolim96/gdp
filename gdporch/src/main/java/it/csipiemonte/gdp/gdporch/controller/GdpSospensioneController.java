@@ -22,7 +22,7 @@ public class GdpSospensioneController {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response postBoSospensioni(@PathParam("idTestata") Long idTestata, @Valid DateRangeRequest request) {
+    public Response postBoSospensioni(@PathParam("idTestata") Integer idTestata, @Valid DateRangeRequest request) {
         SospensioneResponse response = sospensioneService.sospendi(idTestata, request);
         return Response.ok(response).build();
     }
