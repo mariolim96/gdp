@@ -30,7 +30,7 @@ public interface GdpDataUscitaMapper {
         return grouped.entrySet().stream()
                 .map(entry -> {
                     DateAttesePerTestata dto = new DateAttesePerTestata();
-                    dto.setIdTestata(entry.getKey());
+                    dto.setIdTestata(entry.getKey().intValue());
                     dto.setDateAttese(entry.getValue().stream()
                             .map(this::toDataAttesa)
                             .collect(Collectors.toList()));

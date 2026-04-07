@@ -1,8 +1,6 @@
-<<<<<<<< HEAD:gdporch/src/main/java/it/csipiemonte/gdp/gdporch/service/serviceImpl/GdpSospensioneServiceImpl.java
-package it.csipiemonte.gdp.gdporch.service.serviceImpl;
-========
+
 package it.csipiemonte.gdp.gdporch.service.impl;
->>>>>>>> b329af88ec145786208c90c76efea6a400374874:gdporch/src/main/java/it/csipiemonte/gdp/gdporch/service/impl/GdpSospensioneServiceImpl.java
+
 
 import java.util.List;
 import it.csipiemonte.gdp.gdporch.dto.DateRangeRequest;
