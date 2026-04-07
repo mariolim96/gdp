@@ -15,7 +15,9 @@ public enum GdpMessage {
     NO_DATA_USCITA(Codes.AA, "Data edizione non prevista (anomala)"),
     NOT_FOUND(Codes.MSG00002, "Entita (Testata o Edizione) non trovata"),
     ERRORE_DATABASE(Codes.MSG00001, "Errore durante la persistenza sui sistemi DB"),
-    ERRORE_RINOMINA(Codes.MSG00002, "Errore durante la ridenominazione dei file");
+    ERRORE_RINOMINA(Codes.MSG00002, "Errore durante la ridenominazione dei file"),
+    ERRORE_EDIZIONE(Codes.MSG00001, "Errore inserimento record GDP_EDIZIONE"),
+    ERRORE_PAGINA(Codes.MSG00002, "Errore inserimento record GDP_PAGINA");
     
     private static class Codes {
         private static final String MSG00001 = "MSG00001";
