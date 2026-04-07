@@ -8,6 +8,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import it.csipiemonte.gdp.gdporch.model.enums.TipoAcquisizione;
 import jakarta.persistence.Enumerated;
@@ -34,7 +36,7 @@ public class GdpLog extends PanacheEntityBase {
     public TipoAcquisizione tipoAcquisizione; // G = giornaliera S = storica
 
     @Column(name = "DT_ACQUISIZIONE", nullable = false)
-    public LocalDateTime dataAcquisizione;
+    public LocalDate dataAcquisizione;
 
     @Column(name = "TOTALE_FILE_ACQUISITI")
     public Integer totaleFileAcquisiti;
