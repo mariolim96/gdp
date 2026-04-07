@@ -135,6 +135,47 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
         return response;
     }
 
+    @Override
+    @Transactional
+    public void retry(Integer idLog) {
+        LOG.infof("Avvio F21 - retry per idLog %d", idLog);
+        // TODO (F21): Implement full retry logic. Current implementation only resets the status in the DB.
+        // Needs to ensure that the sending job picks up this record immediately or triggers the send logic.
+        Optional<GdpCodaCaricamento> taskOpt = codaCaricamentoRepository.find("fkGdpLogEdizione IN (SELECT id FROM GdpLogEdizione WHERE fkGdpLog = ?1)", idLog)
+                .firstResultOptional();
+        
+        if (taskOpt.isPresent()) {
+            GdpCodaCaricamento task = taskOpt.get();
+            task.stato = StatoCodaCaricamento.PRO;
+            task.nroTentativo = 0;
+            task.dataInserimento = LocalDate.now();
+            LOG.infof("Task %d riportato in stato PRO", task.id);
+        } else {
+            LOG.warnf("Nessun task trovato per idLog %d", idLog);
+        }
+    }
+
+    @Override
+    public void flush() {
+        LOG.info("Avvio F10 - flush manuale della coda");
+        // TODO (F10): Implement manual queue flush. This should trigger the delivery of all 'READY' transmissions to DAM LIBRA.
+        LOG.info("Flush completato (Simulazione - logica F10 da implementare nel job dedicato)");
+    }
+
+    @Override
+    public String getJobStatus(String jobId) {
+        LOG.infof("Avvio F20 - check status per Job ID %s", jobId);
+        // TODO (F20): Integrate with DAM LIBRA API to retrieve actual job status and update GDP_CODA_CARICAMENTO.
+        return "SUBMITTED (Simulazione - Integrazione API DAM F20 TBD)";
+    }
+
+    @Override
+    public void cleanup() {
+        LOG.info("Avvio F19 - pulizia manuale (STUB)");
+        // TODO (F19): Implement cleanup of stale files in /_tmp and /_dam older than policy duration (e.g. 4 hours).
+        LOG.info("Cleanup completato (STUB - nessuna azione eseguita)");
+    }
+
     private String generateXml(GdpTestata t, GdpEdizione e, List<GdpPagina> pagine) {
         StringBuilder sb = new StringBuilder();
         sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");

@@ -45,9 +45,16 @@ public class CreaCartellaEdizioneAttesaJob {
     @org.eclipse.microprofile.config.inject.ConfigProperty(name = "sftp.root.prefix", defaultValue = "")
     String sftpRootPrefix;
 
+    @Inject
+    PollingManager pollingManager;
+
     @Scheduled(cron = "0/10 * * * * ?", identity = "F02-creaCartellaDomani")
     @Transactional
     public void execute() {
+        if (!pollingManager.isEnabled()) {
+            LOG.info("Job F02 saltato: Polling disabilitato da CLI.");
+            return;
+        }
         LOG.info("Inizio job F02 - creaCartellaEdizioneAttesa");
 
         List<GdpDataUscita> expectedEditions = dataUscitaRepository.findExpectedTomorrow();
