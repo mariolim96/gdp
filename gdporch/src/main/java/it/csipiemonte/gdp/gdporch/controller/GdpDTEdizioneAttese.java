@@ -1,7 +1,6 @@
 package it.csipiemonte.gdp.gdporch.controller;
 
 import io.quarkus.logging.Log;
-import it.csipiemonte.gdp.gdporch.dto.DateAtteseList;
 import it.csipiemonte.gdp.gdporch.dto.DateRangeRequest;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpDataUscita;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpPeriodicita;
@@ -9,12 +8,10 @@ import it.csipiemonte.gdp.gdporch.dto.DateAttesePerTestata;
 import it.csipiemonte.gdp.gdporch.mapper.GdpDataUscitaMapper;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpPeriodicitaRepository;
 import it.csipiemonte.gdp.gdporch.service.ConfigDTEdizioneAttesaService;
-import it.csipiemonte.gdp.gdporch.service.VerifDateAtteseService;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
-
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -31,20 +28,7 @@ public class GdpDTEdizioneAttese {
     @Inject
     GdpDataUscitaMapper mapper;
 
-    @Inject
-    VerifDateAtteseService verifService;
 
-    // GET /bo/testate/{idTestata}/date-attese
-    @GET
-    @Produces("application/json")
-    public Response getDateAttese(
-            @PathParam("idTestata") Integer idTestata,
-            @QueryParam("dataInizio") LocalDate dataInizio,
-            @QueryParam("dataFine") LocalDate dataFine) {
-
-        DateAtteseList result = verifService.recuperaDateAttese(idTestata, dataInizio, dataFine);
-        return Response.ok(result).build();
-    }
 
     // POST /bo/testate/{idTestata}/date-attese
     @POST
