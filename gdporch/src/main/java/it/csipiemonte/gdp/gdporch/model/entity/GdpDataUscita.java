@@ -34,4 +34,52 @@ public class GdpDataUscita extends PanacheEntityBase {
 
     @Column(name = "SOSPESA", nullable = false)
     public Boolean sospesa = false;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getFkGdpPeriodicita() {
+        return fkGdpPeriodicita;
+    }
+
+    public void setFkGdpPeriodicita(Integer fkGdpPeriodicita) {
+        this.fkGdpPeriodicita = fkGdpPeriodicita;
+    }
+
+    public LocalDate getDataInizio() {
+        return dataInizio;
+    }
+
+    public void setDataInizio(LocalDate dataInizio) {
+        this.dataInizio = dataInizio;
+    }
+
+    public LocalDate getDataFine() {
+        return dataFine;
+    }
+
+    public void setDataFine(LocalDate dataFine) {
+        this.dataFine = dataFine;
+    }
+
+    public LocalDate getDataAttesa() {
+        return dataAttesa;
+    }
+
+    public void setDataAttesa(LocalDate dataAttesa) {
+        this.dataAttesa = dataAttesa;
+    }
+
+    public Boolean getSospesa() {
+        return sospesa;
+    }
+
+    public void setSospesa(Boolean sospesa) {
+        this.sospesa = sospesa;
+    }
 }

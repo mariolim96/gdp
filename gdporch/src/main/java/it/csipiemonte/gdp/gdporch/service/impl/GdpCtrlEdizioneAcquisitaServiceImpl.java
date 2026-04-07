@@ -80,13 +80,13 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
         LOG.infof("Avvio F04 - FTPregolare.ctrlEdizioneAcquisita per testata %d, data %s", idTestata, dataEdizione);
 
         GenericProcessResponse response = new GenericProcessResponse();
-        response.setMessaggio(GdpMessage.OK.getDescrizioneDefault());
+        response.setMessaggio(GdpMessage.F_OK.getDescrizioneDefault());
 
         // Step 1 - Edition date validation
         GdpPeriodicita periodicita = periodicitaRepository.find("fkGdpTestata", idTestata).firstResult();
         if (periodicita == null) {
             LOG.warnf("Periodicita non trovata per testata %d", idTestata);
-            throw new GdpException(GdpMessage.NO_PERIODICITA);
+            throw new GdpException(GdpMessage.F01_NO_PERIODICITA);
         }
 
         GdpDataUscita dataUscita = dataUscitaRepository.findByPeriodicitaAndDate(periodicita.id, dataEdizione);
@@ -94,7 +94,7 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
 
         if (TipoEdizione.AA.equals(tipoEdizione)) {
             handleBlockingError(cartellaTestata, dataEdizione, idLog);
-            throw new GdpException(GdpMessage.ANOMALIA_DATA_EDIZIONE);
+            throw new GdpException(GdpMessage.F04_DATE_ANOMALY);
         }
 
         // Step 2 - Per-PDF processing loop
@@ -108,7 +108,7 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
             }
         } catch (IOException e) {
             LOG.error("Errore creazione cartella errata", e);
-            throw new GdpException(GdpMessage.ERRORE_IO, "Impossibile creare cartella errata: " + errorPath);
+            throw new GdpException(GdpMessage.F_IO_ERROR, "Impossibile creare cartella errata: " + errorPath);
         }
 
         List<File> pdfFiles;
@@ -118,7 +118,7 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
                     .toList();
         } catch (IOException e) {
             LOG.error("Errore scansione file PDF", e);
-            throw new GdpException(GdpMessage.ERRORE_IO, "Impossibile leggere file dalla directory di edizione");
+            throw new GdpException(GdpMessage.F_IO_ERROR, "Impossibile leggere file dalla directory di edizione");
         }
 
         List<String> descriptionErrors = new CopyOnWriteArrayList<>();
@@ -136,8 +136,8 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
 
         // Step 4 - Invoke F08 (synchronous)
         var f08Response = edizioneService.insEdizione(idTestata, editionPath.toString(), dataEdizione, idLog);
-        if (!GdpMessage.OK.getCodice().equals(f08Response.getCodice())) {
-            handleProcessingError(editionPath, idLog, GdpMessage.ERRORE_IO.getCodice(), f08Response.getMessaggio());
+        if (!GdpMessage.F_OK.getCodice().equals(f08Response.getCodice())) {
+            handleProcessingError(editionPath, idLog, GdpMessage.F_IO_ERROR.getCodice(), f08Response.getMessaggio());
             response.setCodice(f08Response.getCodice());
             response.setMessaggio(f08Response.getMessaggio());
             return response;
@@ -145,8 +145,8 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
 
         // Step 5 - Invoke F09 (synchronous)
         var f09Response = damTrasmissioneService.creaXMLEdizione(idTestata, idLog, f08Response.getIdEdizione(), 0);
-        if (!GdpMessage.OK.getCodice().equals(f09Response.getCodice())) {
-            handleProcessingError(editionPath, idLog, GdpMessage.ERRORE_CODA_DAM.getCodice(), f09Response.getMessaggio());
+        if (!GdpMessage.F_OK.getCodice().equals(f09Response.getCodice())) {
+            handleProcessingError(editionPath, idLog, GdpMessage.F04_DAM_ERROR.getCodice(), f09Response.getMessaggio());
             response.setCodice(f09Response.getCodice());
             response.setMessaggio(f09Response.getMessaggio());
             return response;
@@ -155,7 +155,7 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
         // TODO: invoke F10 asynchronously - will be implemented in branch feat/f10
         // it.csipiemonte.gdp.gdporch.service.DamTrasmissioneService.inviaEdizioneAsync(idLog, f08Response.getIdEdizione());
 
-        response.setCodice(GdpMessage.OK.getCodice());
+        response.setCodice(GdpMessage.F_OK.getCodice());
         return response;
     }
 
@@ -181,7 +181,7 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
             }
             GdpLog log = logRepository.findById(idLog);
             if (log != null) {
-                log.esito = GdpMessage.ERROR_GENERICO.getCodice();
+                log.esito = GdpMessage.F_ERROR.getCodice();
             }
         } catch (IOException e) {
             LOG.error("Errore spostamento edizione AA", e);

@@ -19,6 +19,24 @@ INSERT INTO GDP_TESTATA (ID_GDP_TESTATA, NOME_TESTATA, CARTELLA_TESTATA, INVIO_E
 (3, 'Cuneo News', 'cuneo-news', TRUE, 0, 2, 'CN', 'Informazioni sulla pubblica amministrazione del cuneese'),
 (4, 'Novara Lavoro', 'novara-lavoro', FALSE, 1, 3, 'NO', 'Edizione storica sulle opportunita lavorative a Novara'),
 (5, 'Cinema Astigiano', 'cinema-astigiano', TRUE, 0, 4, 'AT', 'Tutto sul mondo del cinema nella provincia di Asti');
+--DATI AGGIUNTI PER TESTARE DATE ATTESE F01
+--- TESTATA 1 → Caso A mensile
+INSERT INTO gdp_testata
+(id_gdp_testata, nome_testata, cartella_testata, invio_edizione, stato, cod_tema, provincia, descrizione)
+VALUES
+    (6,'Testata Mensile', 'testata-mensile',  TRUE, 1, 1, 'TO','Testata di esempio con uscita mensile per test calcolo periodicità');
+
+-- TESTATA 2 → Caso B settimanale
+INSERT INTO gdp_testata
+(id_gdp_testata, nome_testata, cartella_testata, invio_edizione, stato, cod_tema, provincia, descrizione)
+VALUES
+    (7, 'Testata Settimanale', 'testata-settimanale', TRUE, 1, 1, 'TO', 'Testata di esempio con uscita settimanale per test calcolo uscite');
+
+-- TESTATA 3 → Caso B quotidiano
+INSERT INTO gdp_testata
+(id_gdp_testata, nome_testata, cartella_testata, invio_edizione, stato, cod_tema, provincia, descrizione)
+VALUES
+    (8,'Testata Quotidiana','testata-quotidiana', TRUE, 1, 1, 'TO', 'Testata di esempio con uscita quotidiana per simulazione completa');
 
 -- 3. Populating GDP_PERIODICITA
 INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_PERIODICITA) VALUES
@@ -26,6 +44,18 @@ INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_P
 (2, 2, 12, '1,2,3,4,5,6,7'),
 (3, 3, 12, '1,3,5'), -- Lunedi, Mercoledi, Venerdi
 (4, 5, 12, '6'); -- Solo sabato
+--Inserimenti per testare  Calcolo Date Uscite F01
+-- PERIODICITA TESTATA 6 → Mensile (caso A)
+INSERT INTO gdp_periodicita (id_gdp_periodicita, fk_gdp_testata, mensilita, gg_periodicita)
+VALUES (100, 6, 1, 'G01');  -- esce il primo giorno del mese
+
+-- PERIODICITA TESTATA 7 → Settimanale (caso B)
+INSERT INTO gdp_periodicita (id_gdp_periodicita, fk_gdp_testata, mensilita, gg_periodicita)
+VALUES (101, 7, 0, '1WS3');  -- ogni mercoledì
+
+-- PERIODICITA TESTATA 8 → Quotidiana (caso B)
+INSERT INTO gdp_periodicita (id_gdp_periodicita, fk_gdp_testata, mensilita, gg_periodicita)
+VALUES (102, 8, 0, '1WS0');  -- tutti i giorni
 
 -- 4. Populating GDP_DATA_USCITA
 -- Tomorrow depends on current date. We ensure tomorrow exists for testing F02.
@@ -42,6 +72,13 @@ INSERT INTO GDP_UTENTESFTP (ID_GDP_UTENTESFTP, USERNAME, PASSWORD, HOME_SFTP, RI
 (2, 'sftp_corriere', 'pass_corriere_123', 'upload', '2', 'Dir. Corriere', 'sftp@corriere.it', 'ATTIVO'),
 (3, 'sftp_cuneo', 'pass_cuneo_123', 'upload', '3', 'Dir. Cuneo', 'sftp@cuneonews.it', 'ATTIVO'),
 (4, 'sftp_cinema', 'pass_cinema_123', 'upload', '5', 'Dir. Cinema', 'sftp@cinema.it', 'ATTIVO');
+--DATI AGGIUNTI PER TESTARE F01
+INSERT INTO GDP_UTENTESFTP
+(ID_GDP_UTENTESFTP, USERNAME, PASSWORD, HOME_SFTP, RIF_TESTATA, DIRETTORE, EMAIL, STATO)
+VALUES
+    (6, 'sftp_mensile', 'pass_mensile_123', 'upload', '6', 'Dir. Mensile', 'sftp_mensile@example.com', 'ATTIVO'),
+    (7, 'sftp_settimanale', 'pass_settimanale_123', 'upload', '7', 'Dir. Settimanale', 'sftp_settimanale@example.com', 'ATTIVO'),
+    (8, 'sftp_quotidiana', 'pass_quotidiana_123', 'upload', '8', 'Dir. Quotidiana', 'sftp_quotidiana@example.com', 'ATTIVO');
 
 -- 6. Populating GDP_LOG
 INSERT INTO GDP_LOG (ID_GDP_LOG, FK_GDP_UTENTEFTP, FK_GDP_TESTATA, TIPO_ACQUISIZIONE, DT_ACQUISIZIONE, TOTALE_FILE_ACQUISITI, ESITO) VALUES

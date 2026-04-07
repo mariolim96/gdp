@@ -6,23 +6,69 @@ package it.csipiemonte.gdp.gdporch.exception;
  */
 public enum GdpMessage {
 
-    OK(Codes.MSG00009, "Operazione completata con successo"),
-    ERROR_GENERICO(Codes.MSG00001, "Errore generico di elaborazione"),
-    ANOMALIA_DATA_EDIZIONE(Codes.MSG00001, "Anomalia DATA EDIZIONE — bloccante"),
-    ERRORE_CODA_DAM(Codes.MSG00003, "Anomalia EDIZIONE — creazione pacchetto DAM fallita"),
-    ERRORE_IO(Codes.MSG00002, "Errore di Input/Output durante l'elaborazione"),
-    NO_PERIODICITA(Codes.MSG00001, "Periodicita non definita per la testata"),
-    NO_DATA_USCITA(Codes.AA, "Data edizione non prevista (anomala)"),
-    NOT_FOUND(Codes.MSG00002, "Entita (Testata o Edizione) non trovata"),
-    ERRORE_DATABASE(Codes.MSG00001, "Errore durante la persistenza sui sistemi DB"),
-    ERRORE_RINOMINA(Codes.MSG00002, "Errore durante la ridenominazione dei file"),
-    ERRORE_EDIZIONE(Codes.MSG00001, "Errore inserimento record GDP_EDIZIONE"),
-    ERRORE_PAGINA(Codes.MSG00002, "Errore inserimento record GDP_PAGINA");
+    F_OK(Codes.MSG00009, "Operazione completata con successo"),
+    F_ERROR(Codes.MSG00001, "Errore generico di elaborazione"),
+    F_IO_ERROR(Codes.MSG00002, "Errore di Input/Output durante l'elaborazione"),
+    F_NOT_FOUND(Codes.MSG00002, "Entita non trovata"),
+    
+    // F01 - configDTEdizioneAttesa
+    F01_NO_OCCURRENCES(Codes.MSG00001, "Nessuna occorrenza trovata per i parametri inseriti"),
+    F01_NO_MENSILITA(Codes.MSG00002, "Testata attiva senza MENSILITA definita"),
+    F01_NO_PERIODICITA(Codes.MSG00003, "Testata attiva senza GG_PERIODICITA definita"),
+
+    // F03 - checkEdizioneAttesa
+    F03_NO_NEW_EDITION(Codes.MSG00001, "Nessuna nuova edizione trovata"),
+    F03_AMBIGUOUS_TESTATA(Codes.MSG00002, "<E001> Anomalia UNICITA' TESTATA — multiple IDs found for cartella"),
+
+    // F04 - ctrlEdizioneAcquisita
+    F04_DATE_ANOMALY(Codes.MSG00001, "<E002> Anomalia DATA EDIZIONE — blocking date anomaly"),
+    F04_DB_ERROR(Codes.MSG00002, "<E003> Anomalia EDIZIONE — DB insert failed"),
+    F04_DAM_ERROR(Codes.MSG00003, "<E004> Anomalia EDIZIONE — DAM package creation failed"),
+
+    // F05 - sospensioneEdizioneAttesa / F18 - verifDateAttese / F15 - ricerca
+    F05_NO_RESULTS(Codes.MSG00001, "Nessun risultato trovato per i parametri inseriti"),
+
+    // F06 - checkConsegnaStorico
+    F06_NO_HISTORICAL(Codes.MSG00001, "Nessuna nuova consegna storica trovata"),
+    F06_AMBIGUOUS_TESTATA(Codes.MSG00002, "<E101> Anomalia UNICITA' — multiple testata IDs found"),
+    F06_TESTATA_NOT_FOUND(Codes.MSG00003, "<E102> Anomalia ESISTENZA — testata ID not found"),
+
+    // F07 - ctrlEdizioniStoriche
+    F07_WRONG_DATE_FORMAT(Codes.MSG00001, "<E103> Edition with wrong date format"),
+    F07_FORMAT_ERROR(Codes.MSG00002, "Edition moved (format error)"),
+    F07_DB_ERROR(Codes.MSG00003, "<E104> DB insert failed (F08 error)"),
+    F07_DAM_ERROR(Codes.MSG00004, "<E105> DAM package failed (F09 error)"),
+    
+    // F08 - insEdizione
+    F08_INSERT_EDIZIONE_FAILED(Codes.MSG00001, "Error inserting GDP_EDIZIONE"),
+    F08_INSERT_PAGINA_FAILED(Codes.MSG00002, "Error inserting GDP_PAGINA"),
+
+    // F09 - creaXMLEdizione
+    F09_XML_CREATION_FAILED(Codes.MSG00002, "Error creating XML file"),
+    F09_ZIP_CREATION_FAILED(Codes.MSG00003, "Error creating ZIP file"),
+
+    // F10 - inviaEdizione
+    F10_UPLOAD_EXECUTED(Codes.MSG00009, "<MSG> DAM upload executed"),
+    F10_DAM_TRANSMISSION_FAILED(Codes.MSG00001, "<E005> Anomalia EDIZIONE DAM — transmission failed"),
+
+    // F12 / F13 - monitor
+    F12_MONITOR_ERROR(Codes.MSG00001, "Error retrieving monitoring data"),
+
+    // F14 - preparaMAIL / F22 - invioMAIL
+    F14_MAIL_NOT_FOUND(Codes.MSG00001, "Email address not found"),
+    F22_MAIL_SEND_FAILED(Codes.MSG00001, "Mail send failed"),
+
+    // F20 - statoDAM
+    F20_DATO_NON_TROVATO(Codes.MSG00001, "Dato non trovato"),
+
+    // F21 - attivaCODA
+    F21_MAX_RETRIES(Codes.MSG00001, "ATTENZIONE! Superato il numero massimo di tentativi ammessi");
     
     private static class Codes {
         private static final String MSG00001 = "MSG00001";
         private static final String MSG00002 = "MSG00002";
         private static final String MSG00003 = "MSG00003";
+        private static final String MSG00004 = "MSG00004";
         private static final String MSG00009 = "MSG00009";
         private static final String AA = "AA";
     }

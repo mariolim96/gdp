@@ -115,13 +115,13 @@ public class GdpEdizioneServiceImpl implements GdpEdizioneService {
                 logEd.fkGdpEdizione = edizione.id;
             }
 
-            response.setCodice(GdpMessage.OK.getCodice());
+            response.setCodice(GdpMessage.F_OK.getCodice());
             response.setIdEdizione(edizione.id);
-            response.setMessaggio(GdpMessage.OK.getDescrizioneDefault());
+            response.setMessaggio(GdpMessage.F_OK.getDescrizioneDefault());
             
         } catch (Exception e) {
             LOG.error("Errore durante insEdizione", e);
-            GdpMessage error = e.getMessage() != null && e.getMessage().contains("GDP_PAGINA") ? GdpMessage.ERRORE_PAGINA : GdpMessage.ERRORE_EDIZIONE;
+            GdpMessage error = e.getMessage() != null && e.getMessage().contains("GDP_PAGINA") ? GdpMessage.F08_INSERT_PAGINA_FAILED : GdpMessage.F08_INSERT_EDIZIONE_FAILED;
             response.setCodice(error.getCodice());
             response.setMessaggio(error.getDescrizioneDefault() + ": " + e.getMessage());
         }
