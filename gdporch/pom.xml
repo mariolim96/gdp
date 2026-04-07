@@ -144,6 +144,11 @@
       <artifactId>swagger-annotations</artifactId>
       <version>1.6.14</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>3.0.1</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -226,7 +231,6 @@
             <returnResponse>true</returnResponse>
             <serializableModel>true</serializableModel>
             <useBeanValidation>true</useBeanValidation>
-            <dateLibrary>java8</dateLibrary>
           </configOptions>
         </configuration>
         <executions>

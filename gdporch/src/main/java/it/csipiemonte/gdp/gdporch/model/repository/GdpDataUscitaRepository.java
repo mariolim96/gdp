@@ -28,4 +28,8 @@ public class GdpDataUscitaRepository implements PanacheRepositoryBase<GdpDataUsc
         return list("fkGdpPeriodicita = ?1 and dataAttesa between ?2 and ?3",
                 fkGdpPeriodicita, start, end);
     }
+
+    public GdpDataUscita findByPeriodicitaAndDate(Integer fkGdpPeriodicita, LocalDate dataAttesa) {
+        return find("fkGdpPeriodicita = ?1 and dataAttesa = ?2", fkGdpPeriodicita, dataAttesa).firstResult();
+    }
 }

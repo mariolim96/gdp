@@ -16,8 +16,12 @@ import jakarta.ws.rs.core.Response;
 @Path("/bo/testate/{idTestata}/sospensioni")
 public class GdpSospensioneController {
 
+    private final GdpSospensioneService sospensioneService;
+
     @Inject
-    GdpSospensioneService sospensioneService;
+    public GdpSospensioneController(GdpSospensioneService sospensioneService) {
+        this.sospensioneService = sospensioneService;
+    }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
