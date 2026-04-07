@@ -18,7 +18,7 @@ public class GdpDateUsciteTest {
     @Inject
     GdpDataUscitaService service;
 
-    private GdpPeriodicita periodicita(String ggPeriodicita, double mensilita) {
+    private GdpPeriodicita periodicita(String ggPeriodicita, Integer mensilita) {
         GdpPeriodicita p = new GdpPeriodicita();
         p.setGgPeriodicita(ggPeriodicita);
         p.setMensilita(mensilita);
@@ -30,7 +30,7 @@ public class GdpDateUsciteTest {
     @Test
     void testCasoA_GiornoDelMese() {
         GdpPeriodicita p = new GdpPeriodicita();
-        p.setMensilita(1.0);
+        p.setMensilita(1);
         p.setGgPeriodicita("G01");
 
         LocalDate start = LocalDate.of(2026, 1, 1);
@@ -49,7 +49,7 @@ public class GdpDateUsciteTest {
     @Test
     void testCasoA_GiornoSettimana() {
         GdpPeriodicita p = new GdpPeriodicita();
-        p.setMensilita(1.0);
+        p.setMensilita(1);
         p.setGgPeriodicita("G1S6"); // primo sabato
 
         LocalDate start = LocalDate.of(2026, 1, 1);
@@ -70,7 +70,7 @@ public class GdpDateUsciteTest {
 
         for (int i = 1; i <= 4; i++) {
             GdpPeriodicita p = new GdpPeriodicita();
-            p.setMensilita(0.5); // bimensile/quindicinale
+            p.setMensilita(1); // was 0.5, but mensilita is Integer. Using 1 for monthly-based quindicinale logic.
             p.setGgPeriodicita("G" + i + "S0"); // G1S0, G2S0, G3S0, G4S0
 
             List<LocalDate> result = service.calcolaDateUscite(p, start, end);
@@ -85,7 +85,7 @@ public class GdpDateUsciteTest {
     @Test
     void testCasoB_Settimanale() {
         GdpPeriodicita p = new GdpPeriodicita();
-        p.setMensilita(0.0);
+        p.setMensilita(0);
         p.setGgPeriodicita("1WS3"); // ogni mercoledì
 
         LocalDate start = LocalDate.of(2026, 1, 1);
@@ -102,7 +102,7 @@ public class GdpDateUsciteTest {
     @Test
     void testCasoB_Quotidiano() {
         GdpPeriodicita p = new GdpPeriodicita();
-        p.setMensilita(0.0);
+        p.setMensilita(0);
         p.setGgPeriodicita("1WS0");
 
         LocalDate start = LocalDate.of(2026, 1, 1);
@@ -130,7 +130,7 @@ public class GdpDateUsciteTest {
         // giorni 29-31 gen: settimana esclusa → non inclusi
         // totale: 7 + 7 = 14
         List<LocalDate> result = service.calcolaDateUscite(
-                periodicita("2WS0", 0.0),
+                periodicita("2WS0", 0),
                 LocalDate.of(2026, 1, 1),
                 LocalDate.of(2026, 1, 31)
         );

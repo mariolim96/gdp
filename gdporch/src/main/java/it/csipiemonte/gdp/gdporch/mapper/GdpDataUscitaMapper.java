@@ -31,6 +31,7 @@ public interface GdpDataUscitaMapper {
                 .map(entry -> {
                     DateAttesePerTestata dto = new DateAttesePerTestata();
                     dto.setIdTestata(entry.getKey().intValue());
+                    dto.setNroEdizioniAttese(entry.getValue().size());
                     dto.setDateAttese(entry.getValue().stream()
                             .map(this::toDataAttesa)
                             .collect(Collectors.toList()));

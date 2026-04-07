@@ -69,8 +69,8 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
             List<GdpPagina> pagine = paginaRepository.list("fkGdpEdizione", idEdizione);
 
             if (testata == null || edizione == null) {
-                response.setCodice(GdpMessage.NOT_FOUND.getCodice());
-                response.setMessaggio(GdpMessage.NOT_FOUND.getDescrizioneDefault());
+                response.setCodice(GdpMessage.F_NOT_FOUND.getCodice());
+                response.setMessaggio(GdpMessage.F_NOT_FOUND.getDescrizioneDefault());
                 return response;
             }
 
@@ -122,14 +122,14 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
                 codaCaricamentoRepository.persist(task);
             }
 
-            response.setCodice(GdpMessage.OK.getCodice());
+            response.setCodice(GdpMessage.F_OK.getCodice());
             response.setNomeFileCompresso(zipName);
-            response.setMessaggio(GdpMessage.OK.getDescrizioneDefault());
+            response.setMessaggio(GdpMessage.F_OK.getDescrizioneDefault());
 
         } catch (Exception e) {
             LOG.error("Errore creazione XML/ZIP", e);
-            response.setCodice(GdpMessage.ERRORE_CODA_DAM.getCodice());
-            response.setMessaggio(GdpMessage.ERRORE_CODA_DAM.getDescrizioneDefault() + ": " + e.getMessage());
+            response.setCodice(GdpMessage.F09_ZIP_CREATION_FAILED.getCodice());
+            response.setMessaggio(GdpMessage.F09_ZIP_CREATION_FAILED.getDescrizioneDefault() + ": " + e.getMessage());
         }
 
         return response;

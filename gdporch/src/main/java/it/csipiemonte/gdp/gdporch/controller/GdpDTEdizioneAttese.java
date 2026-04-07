@@ -2,62 +2,47 @@ package it.csipiemonte.gdp.gdporch.controller;
 
 import io.quarkus.logging.Log;
 import it.csipiemonte.gdp.gdporch.dto.DateRangeRequest;
-import it.csipiemonte.gdp.gdporch.model.entity.GdpDataUscita;
-import it.csipiemonte.gdp.gdporch.model.entity.GdpPeriodicita;
-import it.csipiemonte.gdp.gdporch.dto.DateAttesePerTestata;
-import it.csipiemonte.gdp.gdporch.mapper.GdpDataUscitaMapper;
-import it.csipiemonte.gdp.gdporch.model.repository.GdpPeriodicitaRepository;
+import it.csipiemonte.gdp.gdporch.dto.AsyncJobResponse;
 import it.csipiemonte.gdp.gdporch.service.ConfigDTEdizioneAttesaService;
 
 import jakarta.inject.Inject;
-import jakarta.ws.rs.*;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
-@Path("/bo/testate/{idTestata}/date-attese")
+@Path("/bo/date-attese")
 public class GdpDTEdizioneAttese {
+
     @Inject
     ConfigDTEdizioneAttesaService configDTEdizioneAttesaService;
 
-    @Inject
-    GdpPeriodicitaRepository periodicitaRepo;
-
-    @Inject
-    GdpDataUscitaMapper mapper;
-
-
-
-    // POST /bo/testate/{idTestata}/date-attese
     @POST
-    @Consumes("application/json")
-    @Produces("application/json")
-    public Response postDateAttese(@PathParam("idTestata") Integer idTestata, DateRangeRequest request) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response postDateAttese(@Valid DateRangeRequest request) {
 
-        if (idTestata != null) {
-            request.setIdTestata(idTestata);
-        }
+        String jobId = UUID.randomUUID().toString();
+        Log.infof("Ricevuta richiesta calcolo date attese. JobId: %s", jobId);
 
         CompletableFuture.runAsync(() -> {
             try {
-                List<GdpDataUscita> entities = configDTEdizioneAttesaService.calcoloUscite(request);
-
-                Map<Integer, GdpPeriodicita> periodicitaMap = periodicitaRepo.findAll()
-                        .stream()
-                        .collect(Collectors.toMap(GdpPeriodicita::getId, p -> p));
-
-                List<DateAttesePerTestata> testateDto =
-                        mapper.toDateAttesePerTestata(entities, periodicitaMap);
-
-                Log.infof("Elaborate %d testate", testateDto.size());
-
+                configDTEdizioneAttesaService.calcoloUscite(request);
+                Log.infof("Job %s completato con successo", jobId);
             } catch (Exception e) {
-                Log.error("Errore nell'elaborazione asincrona delle date attese", e);
+                Log.errorf("Errore nell'elaborazione asincrona delle date attese (JobId: %s)", jobId, e);
             }
         });
 
-        return Response.accepted().build();
+        AsyncJobResponse response = new AsyncJobResponse();
+        response.setJobId(jobId);
+        response.setStatus(AsyncJobResponse.StatusEnum.PROCESSING);
+
+        return Response.accepted(response).build();
     }
 }
