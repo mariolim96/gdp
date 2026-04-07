@@ -8,6 +8,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 
 @Entity
 @Table(name = "GDP_LOG_EDIZIONE")
@@ -25,8 +28,9 @@ public class GdpLogEdizione extends PanacheEntityBase {
     @Column(name = "NRO_PAG_ACQUISITE")
     public Integer nroPagAcquisite;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "TIPO_EDIZIONE", length = 64)
-    public String tipoEdizione;
+    public TipoEdizione tipoEdizione;
 
     @Column(name = "FK_GDP_EDIZIONE", nullable = false)
     public Integer fkGdpEdizione;

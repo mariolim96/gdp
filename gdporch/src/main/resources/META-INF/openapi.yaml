@@ -44,6 +44,8 @@ tags:
     description: Front Office — Fascicoli (UC — Scenario 7)
   - name: fo-preferiti
     description: Front Office — Favourites (UC — Scenario 7)
+  - name: internal-acquisizioni
+    description: Internal — Acquisition Services (Async/Job triggered)
 
 security:
   - bearerAuth: []
@@ -52,7 +54,6 @@ security:
 # PATHS
 # ─────────────────────────────────────────────────────────────
 paths:
-
   # ── BACK OFFICE — TESTATE ──────────────────────────────────
 
   /bo/testate:
@@ -757,6 +758,121 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  # ── INTERNAL SERVICES ──────────────────────────────────────
+
+  /api/internal/acquisizioni/{idLog}/valida:
+    parameters:
+      - $ref: '#/components/parameters/idLog'
+    post:
+      tags: [internal-acquisizioni]
+      operationId: postInternalAcquisizioneValida
+      summary: Internal trigger for F04 - FTPregolare.ctrlEdizioneAcquisita
+      description: |
+        Called asynchronously by F03. Validates acquired edition.
+        No security required (internal network).
+      parameters:
+        - name: idTestata
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: cartellaTestata
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: dataEdizione
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericProcessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/internal/testate/{idTestata}/edizioni/inserisci:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+    post:
+      tags: [internal-acquisizioni]
+      operationId: postInternalEdizioneInserisci
+      summary: Internal trigger for F08 - DB.insEdizione
+      description: |
+        Inserts or updates edition and page records in DB.
+        Called by F04 (periodic) or F07 (historical).
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: dataEdizione
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: idLog
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EdizioneInsertResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/internal/testate/{idTestata}/edizioni/{idEdizione}/trasmetti:
+    parameters:
+      - $ref: '#/components/parameters/idTestata'
+      - $ref: '#/components/parameters/idEdizione'
+    post:
+      tags: [internal-acquisizioni]
+      operationId: postInternalEdizioneTrasmetti
+      summary: Internal trigger for F09 - DAMtrasmissione.creaXMLEdizione
+      description: |
+        Generates XML metadata + .zip package for DAM transmission.
+        Followed by F10 (asynchronous).
+      parameters:
+        - name: idLog
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: priorita
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            default: 0
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XmlCreationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
   # ── BACK OFFICE — PAGINE / OBLIO ───────────────────────────
 
   /bo/pagine/{idPagina}/oblio:
@@ -824,7 +940,7 @@ paths:
       summary: Full-text archive search
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb)
+        - {} # allows anonymous (utenteWeb)
       description: |
         Delegates to DAM LIBRA search API.
         Applies last-2-editions filter for utenteWeb:
@@ -894,7 +1010,7 @@ paths:
       summary: Advanced archive search
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb)
+        - {} # allows anonymous (utenteWeb)
       description: |
         Adds AND/OR/EXACT operator parameter over /fo/ricerca.
         Same visibility rules apply.
@@ -968,7 +1084,7 @@ paths:
       summary: List consultable testate
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb)
+        - {} # allows anonymous (utenteWeb)
       description: Direct DB read from GDP_TESTATA.
       parameters:
         - name: provincia
@@ -1000,7 +1116,7 @@ paths:
       summary: Public testata data
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb)
+        - {} # allows anonymous (utenteWeb)
       description: Returns only public fields (name, description, province, periodicity). NOT SFTP config.
       responses:
         '200':
@@ -1021,7 +1137,7 @@ paths:
       summary: List editions of a testata
       security:
         - bearerAuth: []
-        - {}  # allows anonymous (utenteWeb) — last-2-editions filter applied
+        - {} # allows anonymous (utenteWeb) — last-2-editions filter applied
       description: |
         Direct DB read from GDP_EDIZIONE.
         Applies last-2-editions filter for utenteWeb
@@ -1071,7 +1187,7 @@ paths:
       summary: Edition detail with page list and metadata
       security:
         - bearerAuth: []
-        - {}  # allows anonymous
+        - {} # allows anonymous
       description: |
         Direct DB read from GDP_EDIZIONE + GDP_PAGINA.
         If utenteWeb and edition is within last 2 → 403.
@@ -1102,7 +1218,7 @@ paths:
       summary: PDF stream of a specific page
       security:
         - bearerAuth: []
-        - {}  # allows anonymous
+        - {} # allows anonymous
       description: |
         Retrieves PDF from DAM LIBRA and streams to client.
         Uses chunked transfer encoding — no full in-memory buffering.
@@ -1148,7 +1264,7 @@ paths:
       summary: Create a new fascicolo
       security:
         - bearerAuth: []
-        - {}  # utenteWeb: temporary PDF; utentePrivilegiato: persisted
+        - {} # utenteWeb: temporary PDF; utentePrivilegiato: persisted
       description: |
         Assembles PDF from individual LIBRA pages using Apache PDFBox 3.x.
         - utenteWeb: PDF generated on-the-fly, not persisted. Returns base64 PDF.
@@ -1257,7 +1373,7 @@ paths:
       summary: Download fascicolo PDF
       security:
         - bearerAuth: []
-        - {}  # utenteWeb: on-the-fly PDF; utentePrivilegiato: saved PDF
+        - {} # utenteWeb: on-the-fly PDF; utentePrivilegiato: saved PDF
       description: |
         - utentePrivilegiato: serves saved PDF.
         - utenteWeb: generates PDF on-the-fly (page assembly).
@@ -1347,7 +1463,6 @@ paths:
 # COMPONENTS
 # ─────────────────────────────────────────────────────────────
 components:
-
   securitySchemes:
     bearerAuth:
       type: http
@@ -1420,7 +1535,6 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
 
   schemas:
-
     # ── ERROR ────────────────────────────────────────────────
     ErrorResponse:
       type: object
@@ -1791,7 +1905,7 @@ components:
           type: integer
         esito:
           type: string
-          example: "<MSG>Elaborazione OK</MSG>"
+          example: '<MSG>Elaborazione OK</MSG>'
           description: |
             Raw status string containing rendering tags mapping to UC-05:
             <MSG> = OK (white text, green background)
@@ -1816,7 +1930,15 @@ components:
 
     AcquisizioneRicercaSummary:
       type: object
-      required: [idLog, idTestata, nomeTestata, tipoEdizione, dataEdizione, dataAcquisizione]
+      required:
+        [
+          idLog,
+          idTestata,
+          nomeTestata,
+          tipoEdizione,
+          dataEdizione,
+          dataAcquisizione,
+        ]
       properties:
         idLog:
           type: integer
@@ -1881,7 +2003,7 @@ components:
           type: integer
         esito:
           type: string
-          example: "<WRN>Avviso: NL – page003.pdf</WRN>"
+          example: '<WRN>Avviso: NL – page003.pdf</WRN>'
           description: Raw status string with rendering tags.
         tipoEdizioneCode:
           $ref: '#/components/schemas/TipoEdizione'
@@ -2258,3 +2380,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Preferito'
+
+    GenericProcessResponse:
+      type: object
+      required: [codice]
+      properties:
+        codice:
+          type: string
+          example: MSG00009
+          description: |
+            Process result code (MSG00009=OK, MSG00001=Date Anomaly, etc.)
+        messaggio:
+          type: string
+          example: Elaborazione OK
+          description: Human readable description or error detail.
+
+    EdizioneInsertResponse:
+      type: object
+      required: [codice, idEdizione]
+      properties:
+        codice:
+          type: string
+          example: MSG00009
+          description: Process result code (MSG00009=OK, MSG00001=Date Anomaly, etc.)
+        messaggio:
+          type: string
+          example: Elaborazione OK
+          description: Human readable description or error detail.
+        idEdizione:
+          type: integer
+          format: int32
+          example: 12345
+          description: ID of the inserted or updated edition (GDP_EDIZIONE.ID_GDP_EDIZIONE).
+
+    XmlCreationResponse:
+      type: object
+      required: [codice, nomeFileCompresso]
+      properties:
+        codice:
+          type: string
+          example: MSG00009
+          description: Process result code (MSG00009=OK, MSG00001=Date Anomaly, etc.)
+        messaggio:
+          type: string
+          example: Elaborazione OK
+          description: Human readable description or error detail.
+        nomeFileCompresso:
+          type: string
+          example: LaSentinellaDelCanavese.2026-03-01.zip
+          description: Generated ZIP filename deposited in the DAM staging area.

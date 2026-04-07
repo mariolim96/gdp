@@ -145,9 +145,9 @@
       <version>1.5.5.Final</version>
     </dependency>
     <dependency>
-      <groupId>io.swagger</groupId>
-      <artifactId>swagger-annotations</artifactId>
-      <version>1.6.14</version>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>3.0.1</version>
     </dependency>
   </dependencies>
   <build>
@@ -226,13 +226,18 @@
           <skipValidateSpec>true</skipValidateSpec>
           <configOptions>
             <interfaceOnly>true</interfaceOnly>
-            <dateLibrary>java8</dateLibrary>
+            <dateLibrary>java17</dateLibrary>
             <useJakartaEe>true</useJakartaEe>
             <returnResponse>true</returnResponse>
             <serializableModel>true</serializableModel>
             <useBeanValidation>true</useBeanValidation>
-            <dateLibrary>java8</dateLibrary>
           </configOptions>
+          <typeMappings>
+            <typeMapping>LocalDate=LocalDate</typeMapping>
+          </typeMappings>
+          <importMappings>
+            <importMapping>LocalDate=java.time.LocalDate</importMapping>
+          </importMappings>
         </configuration>
         <executions>
           <execution>

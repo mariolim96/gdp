@@ -1,8 +1,11 @@
 package it.csipiemonte.gdp.gdporch.model.entity;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import it.csipiemonte.gdp.gdporch.model.enums.StatoCodaCaricamento;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -39,8 +42,9 @@ public class GdpCodaCaricamento extends PanacheEntityBase {
     @Column(name = "PRIORITA")
     public Integer priorita;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "STATO", length = 64)
-    public String stato;
+    public StatoCodaCaricamento stato;
 
     @Column(name = "NRO_MAX_TENTATIVI")
     public Integer nroMaxTentativi = 10;
