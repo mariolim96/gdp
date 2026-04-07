@@ -15,4 +15,24 @@ public interface DamTrasmissioneService {
      * @return Execution result with zip filename
      */
     XmlCreationResponse creaXMLEdizione(Integer idTestata, Integer idLog, Integer idEdizione, Integer priorita);
+
+    /**
+     * Re-enqueues a failed transmission (F21).
+     */
+    void retry(Integer idLog);
+
+    /**
+     * Triggers F10 immediately to flush the queue.
+     */
+    void flush();
+
+    /**
+     * Retrieves the status of a specific DAM job (F20).
+     */
+    String getJobStatus(String jobId);
+
+    /**
+     * Placeholder for manual cleanup (F19).
+     */
+    void cleanup();
 }
