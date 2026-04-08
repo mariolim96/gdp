@@ -28,7 +28,7 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
     }
 
     @Override
-    public Response postInternalAcquisizioneValida(Integer idTestata, String cartellaTestata, LocalDate dataEdizione,
+    public Response orchInternalValidaEdizione(Integer idTestata, String cartellaTestata, LocalDate dataEdizione,
             Integer idLog) {
         GenericProcessResponse result = ctrlEdizioneAcquisitaService.ctrlEdizioneAcquisita(idLog, cartellaTestata,
                 dataEdizione.toString(), "MANUAL", 0);
@@ -36,14 +36,14 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
     }
 
     @Override
-    public Response postInternalEdizioneInserisci(String path, LocalDate dataEdizione, Integer idLog,
+    public Response orchInternalInsEdizione(String path, LocalDate dataEdizione, Integer idLog,
             Integer idTestata) {
         EdizioneInsertResponse result = edizioneService.insEdizione(idTestata, path, dataEdizione, idLog);
         return Response.ok(result).build();
     }
 
     @Override
-    public Response postInternalEdizioneTrasmetti(Integer idLog, Integer priorita, Integer idTestata,
+    public Response orchInternalCreaXML(Integer idLog, Integer priorita, Integer idTestata,
             Integer idEdizione) {
         XmlCreationResponse result = trasmissionService.creaXMLEdizione(idTestata, idLog, idEdizione, priorita);
         return Response.ok(result).build();
