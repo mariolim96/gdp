@@ -30,8 +30,8 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
     @Override
     public Response postInternalAcquisizioneValida(Integer idTestata, String cartellaTestata, LocalDate dataEdizione,
             Integer idLog) {
-        GenericProcessResponse result = ctrlEdizioneAcquisitaService.ctrlEdizioneAcquisita(idTestata, cartellaTestata,
-                dataEdizione, idLog);
+        GenericProcessResponse result = ctrlEdizioneAcquisitaService.ctrlEdizioneAcquisita(idLog, cartellaTestata,
+                dataEdizione.toString(), "MANUAL", 0);
         return Response.ok(result).build();
     }
 

@@ -19,6 +19,7 @@ public enum GdpMessage {
     // F03 - checkEdizioneAttesa
     F03_NO_NEW_EDITION(Codes.MSG00001, "Nessuna nuova edizione trovata"),
     F03_AMBIGUOUS_TESTATA(Codes.MSG00002, "<E001> Anomalia UNICITA' TESTATA — multiple IDs found for cartella"),
+    F03_TESTATA_NOT_FOUND(Codes.MSG00003, "<E001> Anomalia ESISTENZA — cartella testata not found"),
 
     // F04 - ctrlEdizioneAcquisita
     F04_DATE_ANOMALY(Codes.MSG00001, "<E002> Anomalia DATA EDIZIONE — blocking date anomaly"),
@@ -29,6 +30,7 @@ public enum GdpMessage {
     F05_NO_RESULTS(Codes.MSG00001, "Nessun risultato trovato per i parametri inseriti"),
 
     // F06 - checkConsegnaStorico
+    F06_OK(Codes.MSG00009, "OK"),
     F06_NO_HISTORICAL(Codes.MSG00001, "Nessuna nuova consegna storica trovata"),
     F06_AMBIGUOUS_TESTATA(Codes.MSG00002, "<E101> Anomalia UNICITA' — multiple testata IDs found"),
     F06_TESTATA_NOT_FOUND(Codes.MSG00003, "<E102> Anomalia ESISTENZA — testata ID not found"),

@@ -11,6 +11,7 @@ import it.csipiemonte.gdp.gdporch.model.entity.GdpTestata;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpTestataRepository;
 import it.csipiemonte.gdp.sftp.SftpClientProducer;
 import it.csipiemonte.gdp.sftp.SftpSession;
+import it.csipiemonte.gdp.gdporch.utils.SftpUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.control.ActivateRequestContext;
 import jakarta.inject.Inject;
@@ -25,6 +26,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Date;
 
 /**
  * F03 - FTPregolare.checkEdizioneAttesa
@@ -74,13 +76,16 @@ public class CheckEdizioneAttesaJob {
     private final SftpClientProducer      sftpProducer;
     private final GdpTestataRepository    testataRepository;
     private final AcquisizioneMapper      acquisizioneMapper;
+    private final GdpCtrlEdizioneAcquisitaService gdpCtrlEdizioneAcquisitaService;
 
     public CheckEdizioneAttesaJob(SftpClientProducer sftpProducer,
                                   GdpTestataRepository testataRepository,
-                                  AcquisizioneMapper acquisizioneMapper) {
+                                  AcquisizioneMapper acquisizioneMapper,
+                                  GdpCtrlEdizioneAcquisitaService gdpCtrlEdizioneAcquisitaService) {
         this.sftpProducer       = sftpProducer;
         this.testataRepository  = testataRepository;
         this.acquisizioneMapper = acquisizioneMapper;
+        this.gdpCtrlEdizioneAcquisitaService = gdpCtrlEdizioneAcquisitaService;
     }
 
     // -------------------------------------------------------------------------
@@ -98,7 +103,7 @@ public class CheckEdizioneAttesaJob {
 
         try (SftpSession session = sftpProducer.connect()) {
             ChannelSftp sftp = session.getChannel();
-            List<ChannelSftp.LsEntry> testateSftp = leggiCartelle(sftp, sourceDir);
+            List<ChannelSftp.LsEntry> testateSftp = SftpUtils.leggiCartelle(sftp, sourceDir);
 
             if (testateSftp.isEmpty()) {
                 Log.infof("%s - Nessuna nuova edizione trovata.", MSG_VUOTO);
@@ -141,7 +146,7 @@ public class CheckEdizioneAttesaJob {
 
     private void processaEdizioniPerTestata(ChannelSftp sftp, String nomeTestata) {
         String pathTestata = sourceDir + "/" + nomeTestata;
-        List<ChannelSftp.LsEntry> edizioniSftp = leggiCartelle(sftp, pathTestata);
+        List<ChannelSftp.LsEntry> edizioniSftp = SftpUtils.leggiCartelle(sftp, pathTestata);
 
         for (ChannelSftp.LsEntry edizione : edizioniSftp) {
             // FIX: ogni edizione è elaborata in modo indipendente —
@@ -200,7 +205,7 @@ public class CheckEdizioneAttesaJob {
         } else if (testateDb.isEmpty()) {
             Log.errorf("%s - Nessuna testata trovata per [%s]. Spostamento in errata.",
                     MSG_NON_TROVATO, nomeCartella);
-            procediErrore(sftp, nomeCartella, nomeEdizione, dtAcq, pathEdizione, files, MSG_NON_TROVATO);
+            procediErrore(sftp, nomeCartella, nomeEdizione, dtAcq, pathEdizione, files, it.csipiemonte.gdp.gdporch.exception.GdpMessage.F03_TESTATA_NOT_FOUND.name());
 
         } else {
             procediSuccesso(sftp, testateDb.get(0), nomeEdizione, dtAcq, pathEdizione, files);
@@ -223,7 +228,7 @@ public class CheckEdizioneAttesaJob {
                                  String dtAcq, String pathEdizione, List<ChannelSftp.LsEntry> files) {
         try {
             String targetPath = tmpDir + "/" + testata.cartellaTestata + "/" + nomeEdizione;
-            creaDirectoryRicorsiva(sftp, targetPath);
+            SftpUtils.creaDirectoryRicorsiva(sftp, targetPath);
 
             for (ChannelSftp.LsEntry file : files) {
                 String nomeFile          = file.getFilename();
@@ -237,12 +242,22 @@ public class CheckEdizioneAttesaJob {
                 sftp.put(new ByteArrayInputStream(new byte[0]), sorgenteFile + ".OK");
             }
 
-            // FIX: conteggio DOPO lo spostamento, rileggendo la cartella tmp come da specifica
-            int totaleFileInTmp = contaFileInCartella(sftp, targetPath);
-            inserisciGdpLog(testata.id, dtAcq, totaleFileInTmp, MSG_OK);
+            int totaleFileInTmp = SftpUtils.contaFileInCartella(sftp, targetPath);
+            Integer idLog = inserisciGdpLog(testata.id, dtAcq, totaleFileInTmp, MSG_OK);
 
-            Log.infof("Edizione [%s/%s] acquisita correttamente. File in TMP: %d",
-                    testata.cartellaTestata, nomeEdizione, totaleFileInTmp);
+            Log.infof("Edizione [%s/%s] acquisita correttamente (Log ID: %d). File in TMP: %d",
+                    testata.cartellaTestata, nomeEdizione, idLog, totaleFileInTmp);
+
+            // Trigger F04 pipeline asynchronously
+            if (idLog != null) {
+                managedExecutor.runAsync(() -> {
+                    try {
+                        gdpCtrlEdizioneAcquisitaService.ctrlEdizioneAcquisita(idLog, testata.cartellaTestata, nomeEdizione, dtAcq, totaleFileInTmp);
+                    } catch (Exception e) {
+                        Log.errorf("Errore durante l'avvio della pipeline F04 per log %d: %s", idLog, e.getMessage());
+                    }
+                });
+            }
 
         } catch (SftpException e) {
             Log.errorf("Errore I/O SFTP in procediSuccesso per edizione [%s]: %s", nomeEdizione, e.getMessage(), e);
@@ -261,7 +276,7 @@ public class CheckEdizioneAttesaJob {
                                String dtAcq, String pathEdizione, List<ChannelSftp.LsEntry> files, String errore) {
         try {
             String targetPath = errataDir + "/" + nomeCartella + "/" + nomeEdizione;
-            creaDirectoryRicorsiva(sftp, targetPath);
+            SftpUtils.creaDirectoryRicorsiva(sftp, targetPath);
 
             for (ChannelSftp.LsEntry file : files) {
                 sftp.rename(
@@ -302,12 +317,8 @@ public class CheckEdizioneAttesaJob {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Persistenza GDP_LOG
-    // -------------------------------------------------------------------------
-
     @Transactional
-    public void inserisciGdpLog(Integer fkTestata, String dataAcquisizione, Integer totaleFile, String esito) {
+    public Integer inserisciGdpLog(Integer fkTestata, String dataAcquisizione, Integer totaleFile, String esito) {
         try {
             LocalDateTime ldt = LocalDateTime.parse(dataAcquisizione, DF_LOG);
 
@@ -316,31 +327,33 @@ public class CheckEdizioneAttesaJob {
             dto.setNroTotFile(totaleFile);
             dto.setEsito(esito);
             dto.setTipoAcquisizione(AcquisizioneDetail.TipoAcquisizioneEnum.G);
-            dto.setDataAcquisizione(ldt.atZone(ZoneId.systemDefault()).toOffsetDateTime());
+            dto.setDataAcquisizione(Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant()));
 
             GdpUtenteSftp utente = new GdpUtenteSftp();
             utente.id = defaultUtenteFtpId;
 
-            acquisizioneMapper.toEntity(dto, utente).persist();
+            it.csipiemonte.gdp.gdporch.model.entity.GdpLog logEntity = acquisizioneMapper.toEntity(dto, utente);
+            logEntity.persist();
 
-            Log.infof("GDP_LOG registrato - FK_TESTATA: %d | Esito: %s | File: %d",
-                    fkTestata, esito, totaleFile);
+            Log.infof("GDP_LOG registrato - ID: %d | FK_TESTATA: %d | Esito: %s | File: %d",
+                    logEntity.id, fkTestata, esito, totaleFile);
+
+            return logEntity.id;
 
         } catch (Exception e) {
             Log.errorf("Errore persistenza GDP_LOG - FK: %d | Esito: %s | Errore: %s",
                     fkTestata, esito, e.getMessage(), e);
+            return null;
         }
     }
 
     // -------------------------------------------------------------------------
-    // Utility SFTP
+    // Utility F03
     // -------------------------------------------------------------------------
 
     /**
      * Verifica la stabilità dei file controllando che la dimensione
      * non cambi per un intero intervallo — come da specifica F03.
-     * Ogni 15 secondi per un massimo di 3 minuti (stableSeconds).
-     * Sicuro perché eseguito nel ManagedExecutor, non nello scheduler.
      */
     private boolean isCartellaStabile(ChannelSftp sftp, String path) {
         final int intervalSec = 15;
@@ -349,7 +362,8 @@ public class CheckEdizioneAttesaJob {
         try {
             Map<String, Long> lastSizes = new HashMap<>();
             for (int i = 0; i < maxChecks; i++) {
-                Map<String, Long> currentSizes = sftp.ls(path).stream()
+                java.util.Vector<ChannelSftp.LsEntry> vector = sftp.ls(path);
+                Map<String, Long> currentSizes = new ArrayList<>(vector).stream()
                         .filter(e -> !e.getAttrs().isDir())
                         .collect(Collectors.toMap(
                                 ChannelSftp.LsEntry::getFilename,
@@ -388,67 +402,17 @@ public class CheckEdizioneAttesaJob {
 
     /**
      * Restituisce i file che non hanno ancora un marker .OK associato.
-     * Usato per evitare di riprocessare edizioni già elaborate.
      */
     private List<ChannelSftp.LsEntry> getFileSenzaMarker(ChannelSftp sftp, String path) {
         try {
-            List<ChannelSftp.LsEntry> entries = new ArrayList<>(sftp.ls(path));
-
-            return entries.stream()
+            java.util.Vector<ChannelSftp.LsEntry> vector = sftp.ls(path);
+            return new ArrayList<>(vector).stream()
                     .filter(e -> !e.getAttrs().isDir())
                     .filter(e -> !e.getFilename().endsWith(".OK"))
                     .toList();
-
         } catch (SftpException e) {
             Log.warnf("Errore lettura file senza marker in [%s]: %s", path, e.getMessage());
             return List.of();
-        }
-    }
-
-    /**
-     * Elenca le sottocartelle di un path (esclude . e ..).
-     */
-    private List<ChannelSftp.LsEntry> leggiCartelle(ChannelSftp sftp, String path) {
-        try {
-            return new ArrayList<>(sftp.ls(path)).stream()
-                    .filter(e -> e.getAttrs().isDir()
-                            && !e.getFilename().equals(".")
-                            && !e.getFilename().equals(".."))
-                    .toList();
-        } catch (SftpException e) {
-            Log.warnf("Errore lettura cartelle in [%s]: %s", path, e.getMessage());
-            return List.of();
-        }
-    }
-
-    /**
-     * Conta i file (non directory) presenti nel path specificato.
-     * Usato per il conteggio post-spostamento in tmp.
-     */
-    private int contaFileInCartella(ChannelSftp sftp, String path) {
-        try {
-            return (int) new ArrayList<>(sftp.ls(path)).stream()
-                    .filter(e -> !e.getAttrs().isDir())
-                    .count();
-        } catch (SftpException e) {
-            Log.warnf("Impossibile contare i file in [%s]: %s", path, e.getMessage());
-            return 0;
-        }
-    }
-
-    /**
-     * Crea ricorsivamente le directory se non presenti (equivalente a mkdir -p).
-     */
-    private void creaDirectoryRicorsiva(ChannelSftp sftp, String path) {
-        StringBuilder current = new StringBuilder();
-        for (String segmento : path.split("/")) {
-            if (segmento.isEmpty()) continue;
-            current.append("/").append(segmento);
-            try {
-                sftp.mkdir(current.toString());
-            } catch (SftpException ignored) {
-                // Directory già esistente: proseguiamo
-            }
         }
     }
 }
