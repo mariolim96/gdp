@@ -135,6 +135,7 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
         return response;
     }
 
+
     private String generateXml(GdpTestata t, GdpEdizione e, List<GdpPagina> pagine) {
         StringBuilder sb = new StringBuilder();
         sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
@@ -160,4 +161,14 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
         Files.copy(filePath, zos);
         zos.closeEntry();
     }
+
+/*
+    @Override
+    public void inviaEdizioneAsync(Integer idLog, Integer idEdizione, String nomeFileCompresso) {
+        LOG.infof("F10 - Richiesta invio asincrono ricevuta per Log: %d, Edizione: %d, File: %s",
+                idLog, idEdizione, nomeFileCompresso);
+        // Qui in futuro potresti aggiungere l'annotazione @Asynchronous
+    }
+    */
+
 }
