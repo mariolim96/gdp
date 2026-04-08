@@ -15,5 +15,5 @@ public interface GdpCtrlEdizioneAcquisitaService {
      * @param idLog Reference ID for GDP_LOG
      * @return Execution result with code (e.g., MSG00009, MSG00001)
      */
-    GenericProcessResponse ctrlEdizioneAcquisita(Integer idTestata, String carteliaTestata, LocalDate dataEdizione, Integer idLog);
+    GenericProcessResponse ctrlEdizioneAcquisita(Integer idLog, String cartellaTestata, String nomeEdizione, String dataAcquisizione, Integer fileCount);
 }

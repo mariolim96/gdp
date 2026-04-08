@@ -14,6 +14,7 @@ import it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione;
 import it.csipiemonte.gdp.gdporch.service.DamTrasmissioneService;
 import it.csipiemonte.gdp.gdporch.service.GdpCtrlEdizioneAcquisitaService;
 import it.csipiemonte.gdp.gdporch.service.GdpEdizioneService;
+import it.csipiemonte.gdp.gdporch.utils.FileUtils;
 import it.csipiemonte.gdp.gdporch.utils.PdfUtils;
 import it.csipiemonte.gdp.gdporch.exception.GdpException;
 import it.csipiemonte.gdp.gdporch.exception.GdpMessage;
@@ -75,12 +76,20 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
 
     @Override
     @Transactional
-    public GenericProcessResponse ctrlEdizioneAcquisita(Integer idTestata, String cartellaTestata,
-            LocalDate dataEdizione, Integer idLog) {
-        LOG.infof("Avvio F04 - FTPregolare.ctrlEdizioneAcquisita per testata %d, data %s", idTestata, dataEdizione);
+    public GenericProcessResponse ctrlEdizioneAcquisita(Integer idLog, String cartellaTestata,
+            String nomeEdizione, String dataAcquisizione, Integer fileCount) {
+        LocalDate dataEdizione = LocalDate.parse(nomeEdizione);
+        LOG.infof("Avvio F04 - FTPregolare.ctrlEdizioneAcquisita per log %d, testata %s, edizione %s (acquisita il %s)", idLog, cartellaTestata, nomeEdizione, dataAcquisizione);
 
         GenericProcessResponse response = new GenericProcessResponse();
         response.setMessaggio(GdpMessage.F_OK.getDescrizioneDefault());
+
+        GdpLog log = logRepository.findById(idLog);
+        if (log == null) {
+            LOG.warnf("Log non trovato per id %d", idLog);
+            throw new GdpException(GdpMessage.F_NOT_FOUND);
+        }
+        Integer idTestata = log.fkGdpTestata;
 
         // Step 1 - Edition date validation
         GdpPeriodicita periodicita = periodicitaRepository.find("fkGdpTestata", idTestata).firstResult();
@@ -98,7 +107,7 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
         }
 
         // Step 2 - Per-PDF processing loop
-        String safeCartella = sanitizePathComponent(cartellaTestata);
+        String safeCartella = FileUtils.sanitizePathComponent(cartellaTestata);
         Path editionPath = Paths.get(tmpPrefix, safeCartella, dataEdizione.toString());
         Path errorPath = Paths.get(errataPrefix, safeCartella, dataEdizione.toString());
 
@@ -152,7 +161,7 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
             return response;
         }
 
-        // TODO: invoke F10 asynchronously - will be implemented in branch feat/f10
+        // @TODO: invoke F10 asynchronously - will be implemented in branch feat/f10
         // it.csipiemonte.gdp.gdporch.service.DamTrasmissioneService.inviaEdizioneAsync(idLog, f08Response.getIdEdizione());
 
         response.setCodice(GdpMessage.F_OK.getCodice());
@@ -345,11 +354,7 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
         }
     }
 
-    private String sanitizePathComponent(String part) {
-        if (part == null) return "unknown";
-        // Prevent path traversal and illegal characters
-        return part.replaceAll("[\\\\/:*?\"<>|]", "_").replace("..", "_");
-    }
+
 
     private void handleProcessingError(Path src, Integer idLog, String code, String message) {
         // Find folder index in the prefix to replicate it in errata

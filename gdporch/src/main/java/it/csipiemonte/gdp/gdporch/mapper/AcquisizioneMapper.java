@@ -7,8 +7,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.LocalDate;
 
 @Mapper(componentModel = "jakarta")
 public interface AcquisizioneMapper {
@@ -27,15 +25,7 @@ public interface AcquisizioneMapper {
         return value != null ? value.value() : null;
     }
 
-    // Se la tua Entity GdpLog usa LocalDate (come visto prima)
-    default LocalDate map(OffsetDateTime value) {
-        return value != null ? value.toLocalDate() : null;
+    default LocalDateTime map(java.util.Date value) {
+        return value != null ? LocalDateTime.ofInstant(value.toInstant(), java.time.ZoneId.systemDefault()) : null;
     }
-
-    // Se invece l'Entity usa LocalDateTime, usa questo:
-    /*
-    default LocalDateTime map(OffsetDateTime value) {
-        return value != null ? value.toLocalDateTime() : null;
-    }
-    */
 }
