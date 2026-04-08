@@ -7,12 +7,12 @@ Below is a comprehensive list of all potential Odoo tickets required to complete
 ## EPIC 1: Expected Scheduling & Acquisition (Phase 3)
 *Focus: Calculating when to expect editions and capturing them from SFTP.*
 
-### Ticket: Implement Expected Date Calculation Logic (F01)
+### Ticket: Implement Expected Date Calculation Logic (F01) [COMPLETED]
 **Type**: Independent
 **Description**: Write the complex `configDTEdizioneAttesa` (F01) service to calculate expected publishing dates based on periodic rules (e.g. `MENSILITA` values, `nGx` formats). Ensure records are idempotently persisted to `GDP_DATA_USCITA` table.
 **Estimate**: 18h
 
-### Ticket: Implement Date Suspension & Retrieval Logic (F05 & F18)
+### Ticket: Implement Date Suspension & Retrieval Logic (F05 & F18)[DEVELOPING]
 **Type**: Dependent
 **Depends On**: F01
 **Description**: Implement the `sospensioneEdizioneAttesa` (F05) service to allow manual suspension of expected editions, and `verifDateAttese` (F18) for retrieving the calendar of expected/suspended dates.
@@ -24,7 +24,7 @@ Below is a comprehensive list of all potential Odoo tickets required to complete
 **Implementation Note**: Switched from MINA to JSch and added `atmoz/sftp` Docker container for local testing.
 **Estimate**: 18h
 
-### Ticket: Implement Periodic Publishing Polling Job (F03)
+### Ticket: Implement Periodic Publishing Polling Job (F03) [DEVELOPING]
 **Type**: Dependent
 **Depends On**: F01, F02
 **Description**: Build the 15-minute polling service `checkEdizioneAttesa` (F03) scanning `/_flusso_regolare`. Detect transfer completion (size stability), record acquisition to `GDP_LOG`, and prepare the staging area in `/_tmp`.
@@ -35,19 +35,19 @@ Below is a comprehensive list of all potential Odoo tickets required to complete
 ## EPIC 2: Validation & State Persistence (Phase 4)
 *Focus: Processing acquired files and recording the permanent state in the database.*
 
-### Ticket: Implement Validation Rules for Periodic Flow (F04)
+### Ticket: Implement Validation Rules for Periodic Flow (F04) [COMPLETED]
 **Type**: Dependent
 **Depends On**: F03
 **Description**: Create the core PDF validation logic (F04) including multi-page splitting, format/naming verification, and basic TXT extraction. Implement date and front-page heuristics from PDF contents.
 **Estimate**: 12h
 
-### Ticket: Implement Edition Data Persistence Service (F08)
+### Ticket: Implement Edition Data Persistence Service (F08) [DEVELOPING]
 **Type**: Dependent
 **Depends On**: F04
 **Description**: Implement the transactional `insEdizione` (F08) service. It must create or update `GDP_EDIZIONE` and `GDP_PAGINA` records based on validated metadata. Calculate `DATA_PUBBLICAZIONE` depending on periodic rules.
 **Estimate**: 16h
 
-### Ticket: Implement Testate Lookup Queries (F16, F17)
+### Ticket: Implement Testate Lookup Queries (F16, F17) 
 **Type**: Independent
 **Description**: Implement basic read operations: `getElencoTestate` (F16) for lists with filtering and `getTestata` (F17) for full details.
 **Estimate**: 6h
@@ -57,12 +57,12 @@ Below is a comprehensive list of all potential Odoo tickets required to complete
 ## EPIC 3: Historical Delivery (Phase 5)
 *Focus: Handling bulk historical loads from dedicated archivist folders.*
 
-### Ticket: Implement Historical Delivery Polling Job (F06)
+### Ticket: Implement Historical Delivery Polling Job (F06) [DEVELOPING]
 **Type**: Independent
 **Description**: Implement the nightly `checkConsegnaStorico` job (F06) traversing `/_flusso_saltuario`. Handle folder resolution, map against known testata names, and handle duplicate/unknown testata cases according to spec.
 **Estimate**: 12h
 
-### Ticket: Implement Validation Rules for Historical Flow (F07)
+### Ticket: Implement Validation Rules for Historical Flow (F07) [DEVELOPING]
 **Type**: Dependent
 **Depends On**: F06
 **Description**: Create historical edition validation (F07) to verify the structured folder names (`yyyymmdd`) and check for the presence of matching PDF, TXT, and optional TIF files.

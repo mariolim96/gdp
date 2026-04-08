@@ -10,6 +10,7 @@ import it.csipiemonte.gdp.gdporch.model.entity.GdpPeriodicita;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpDataUscitaRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpPeriodicitaRepository;
 import it.csipiemonte.gdp.gdporch.service.GdpSospensioneService;
+import it.csipiemonte.gdp.gdporch.exception.GdpMessage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -41,7 +42,7 @@ public class GdpSospensioneServiceImpl implements GdpSospensioneService {
         GdpPeriodicita periodicita = periodicitaRepository.findActiveByTestata(idTestata);
     
         if (periodicita == null) {
-            return new SospensioneResponse().message("MSG00001").giorniSospesi(0);
+            return new SospensioneResponse().message(GdpMessage.F05_NO_RESULTS.getCodice()).giorniSospesi(0);
         }
 
         // 2. Query expected dates for this periodicity
@@ -51,7 +52,7 @@ public class GdpSospensioneServiceImpl implements GdpSospensioneService {
                 request.getDataFine());
 
         if (date.isEmpty()) {
-            return new SospensioneResponse().message("MSG00001").giorniSospesi(0);
+            return new SospensioneResponse().message(GdpMessage.F05_NO_RESULTS.getCodice()).giorniSospesi(0);
         }
 
         // 3. Update periodicity metadata (Inizio/Fine Sospensione)
@@ -63,6 +64,6 @@ public class GdpSospensioneServiceImpl implements GdpSospensioneService {
             d.sospesa = true;
         }
 
-        return new SospensioneResponse().message("MSG00009").giorniSospesi(date.size());
+        return new SospensioneResponse().message(GdpMessage.F_OK.getCodice()).giorniSospesi(date.size());
     }
 }

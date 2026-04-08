@@ -1,5 +1,6 @@
 package it.csipiemonte.gdp.gdporch.mapper;
 
+import it.csipiemonte.gdp.gdporch.exception.GdpMessage;
 import it.csipiemonte.gdp.gdporch.dto.SospensioneResponse;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpDataUscita;
 import org.mapstruct.Mapper;
@@ -12,7 +13,7 @@ public interface SospensioneMapper {
     SospensioneMapper INSTANCE = Mappers.getMapper(SospensioneMapper.class);
 
     @Mapping(target = "giorniSospesi", source = "id")
-    @Mapping(target = "message", constant = "MSG00009")
+    @Mapping(target = "message", constant = GdpMessage.Codes.MSG00009)
     SospensioneResponse toResponse(GdpDataUscita entity);
 }
 

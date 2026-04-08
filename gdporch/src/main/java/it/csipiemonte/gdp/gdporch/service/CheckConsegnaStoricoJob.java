@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  * 3. Smistamento file: in 'tmp' per la lavorazione o in 'errata' per anomalie,
  * mantenendo la struttura utente/consegna.
  *
- * I messaggi MSG0000x seguono lo standard di tracciamento CSI.
+ * Gli esiti seguono lo standard di tracciamento CSI (mappati via GdpMessage).
  */
 @ApplicationScoped
 public class CheckConsegnaStoricoJob {
@@ -44,11 +44,7 @@ public class CheckConsegnaStoricoJob {
     private static final DateTimeFormatter DF_CARTELLA = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String PATTERN_CONS = "^CONS_\\d{4}-\\d{2}-\\d{2}$";
 
-    // Codici esito per GDP_LOG
-    // Codici esito per GDP_LOG mappati da GdpMessage
-    private static final String MSG_OK           = GdpMessage.F06_OK.getCodice();
-    private static final String MSG_DUPLICATO    = GdpMessage.F06_AMBIGUOUS_TESTATA.getCodice();
-    private static final String MSG_NON_TROVATO  = GdpMessage.F06_TESTATA_NOT_FOUND.getCodice();
+    // Esiti GDP_LOG gestiti direttamente via GdpMessage enum
 
     @ConfigProperty(name = "sftp.root.prefix.flussoSaltuario")
     String saltuarioDir;
@@ -121,7 +117,7 @@ public class CheckConsegnaStoricoJob {
                 return;
             }
 
-            Log.infof("%s - Operazione conclusa correttamente.", MSG_OK);
+            Log.infof("%s - Operazione conclusa correttamente.", GdpMessage.F06_OK.getCodice());
 
         } catch (Exception e) {
             Log.errorf("Errore critico durante la connessione SFTP: %s", e.getMessage(), e);
@@ -171,12 +167,12 @@ public class CheckConsegnaStoricoJob {
             String ids = testate.stream()
                     .map(t -> String.valueOf(t.id))
                     .collect(Collectors.joining(","));
-            Log.errorf("%s - Trovate più testate per la cartella [%s]: %s", MSG_DUPLICATO, nomeCartella, ids);
-            gestisciAnomalia(sftp, utente, nomeConsegna, nomeCartella, dataCartella, MSG_DUPLICATO);
+            Log.errorf("%s - Trovate più testate per la cartella [%s]: %s", GdpMessage.F06_AMBIGUOUS_TESTATA.getCodice(), nomeCartella, ids);
+            gestisciAnomalia(sftp, utente, nomeConsegna, nomeCartella, dataCartella, GdpMessage.F06_AMBIGUOUS_TESTATA);
 
         } else if (testate.isEmpty()) {
-            Log.errorf("%s - Nessuna testata trovata per la cartella [%s].", MSG_NON_TROVATO, nomeCartella);
-            gestisciAnomalia(sftp, utente, nomeConsegna, nomeCartella, dataCartella, MSG_NON_TROVATO);
+            Log.errorf("%s - Nessuna testata trovata per la cartella [%s].", GdpMessage.F06_TESTATA_NOT_FOUND.getCodice(), nomeCartella);
+            gestisciAnomalia(sftp, utente, nomeConsegna, nomeCartella, dataCartella, GdpMessage.F06_TESTATA_NOT_FOUND);
 
         } else {
             // Caso OK: testata trovata univocamente
@@ -193,16 +189,16 @@ public class CheckConsegnaStoricoJob {
      * usiamo l'ID 0 (testata tecnica) per poter salvare il log rispettando i vincoli DB.
      */
     private void gestisciAnomalia(ChannelSftp sftp, String utente, String consegna, String cartella,
-                                  String dataCartella, String msgErrore) {
+                                  String dataCartella, GdpMessage message) {
         String cartellaSanificata = FileUtils.sanitizePathComponent(cartella);
         String source = FileUtils.joinPath(saltuarioDir, utente, consegna, cartella);
         String target = FileUtils.joinPath(errataDir, utente, consegna, cartellaSanificata);
 
         int fileCount = SftpUtils.contaFileInCartella(sftp, source);
         spostaCartella(sftp, source, target);
-        inserisciGdpLog(0, dataCartella, fileCount, msgErrore);
+        inserisciGdpLog(0, dataCartella, fileCount, message);
 
-        Log.infof("<%s> Anomalia rilevata per [%s]. Cartella spostata in ERRATA.", msgErrore, cartella);
+        Log.infof("<%s> Anomalia rilevata per [%s]. Cartella spostata in ERRATA.", message.getCodice(), cartella);
     }
 
     /**
@@ -216,9 +212,9 @@ public class CheckConsegnaStoricoJob {
 
         int fileCount = SftpUtils.contaFileInCartella(sftp, source);
         spostaCartella(sftp, source, target);
-        Integer idLog = inserisciGdpLog(testata.id, dataCartella, fileCount, MSG_OK);
+        Integer idLog = inserisciGdpLog(testata.id, dataCartella, fileCount, GdpMessage.F06_OK);
 
-        Log.infof("Cartella [%s] (ID: %d) dell'utente [%s] smistata correttamente in TMP.", cartella, testata.id, utente);
+        Log.infof("Cartella [%s] (Log ID: %d, Testata ID: %d) dell'utente [%s] smistata correttamente in TMP.", cartella, idLog, testata.id, utente);
 
         // TODO F07: Invocazione asincrona del servizio di controllo edizioni storiche.
         // Il servizio (da implementare in branch/f07) riceverà:
@@ -237,14 +233,14 @@ public class CheckConsegnaStoricoJob {
      * Converte la stringa timestamp dell'SFTP in OffsetDateTime per il database.
      */
     @Transactional
-    public Integer inserisciGdpLog(Integer fkTestata, String dataCartella, Integer totaleFile, String esito) {
+    public Integer inserisciGdpLog(Integer fkTestata, String dataCartella, Integer totaleFile, GdpMessage message) {
         try {
             LocalDateTime ldt = LocalDateTime.parse(dataCartella, DF_CARTELLA);
 
             AcquisizioneDetail dto = new AcquisizioneDetail();
             dto.setIdTestata(fkTestata);
             dto.setNroTotFile(totaleFile);
-            dto.setEsito(esito);
+            dto.setEsito(message.getCodice());
             dto.setTipoAcquisizione(AcquisizioneDetail.TipoAcquisizioneEnum.S);
             dto.setDataAcquisizione(java.util.Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant()));
 

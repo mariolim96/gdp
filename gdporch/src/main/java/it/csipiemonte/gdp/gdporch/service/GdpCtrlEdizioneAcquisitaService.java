@@ -1,7 +1,7 @@
 package it.csipiemonte.gdp.gdporch.service;
 
 import it.csipiemonte.gdp.gdporch.dto.GenericProcessResponse;
-import java.time.LocalDate;
+
 
 public interface GdpCtrlEdizioneAcquisitaService {
     
@@ -13,7 +13,7 @@ public interface GdpCtrlEdizioneAcquisitaService {
      * @param carteliaTestata Folder name on SFTP
      * @param dataEdizione Expected edition date
      * @param idLog Reference ID for GDP_LOG
-     * @return Execution result with code (e.g., MSG00009, MSG00001)
+     * @return Execution result with GdpMessage code (e.g., F_OK, F_ERROR)
      */
     GenericProcessResponse ctrlEdizioneAcquisita(Integer idLog, String cartellaTestata, String nomeEdizione, String dataAcquisizione, Integer fileCount);
 }

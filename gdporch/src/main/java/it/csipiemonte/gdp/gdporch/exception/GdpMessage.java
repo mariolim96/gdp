@@ -16,7 +16,12 @@ public enum GdpMessage {
     F01_NO_MENSILITA(Codes.MSG00002, "Testata attiva senza MENSILITA definita"),
     F01_NO_PERIODICITA(Codes.MSG00003, "Testata attiva senza GG_PERIODICITA definita"),
 
+    // F02 - creaCartellaEdizioneAttesa
+    F02_OK(Codes.MSG00009, "OK"),
+    F02_NO_OCCURRENCES(Codes.MSG00001, "Nessuna edizione attesa per domani"),
+
     // F03 - checkEdizioneAttesa
+    F03_OK(Codes.MSG00009, "OK"),
     F03_NO_NEW_EDITION(Codes.MSG00001, "Nessuna nuova edizione trovata"),
     F03_AMBIGUOUS_TESTATA(Codes.MSG00002, "<E001> Anomalia UNICITA' TESTATA — multiple IDs found for cartella"),
     F03_TESTATA_NOT_FOUND(Codes.MSG00003, "<E001> Anomalia ESISTENZA — cartella testata not found"),
@@ -66,13 +71,12 @@ public enum GdpMessage {
     // F21 - attivaCODA
     F21_MAX_RETRIES(Codes.MSG00001, "ATTENZIONE! Superato il numero massimo di tentativi ammessi");
     
-    private static class Codes {
-        private static final String MSG00001 = "MSG00001";
-        private static final String MSG00002 = "MSG00002";
-        private static final String MSG00003 = "MSG00003";
-        private static final String MSG00004 = "MSG00004";
-        private static final String MSG00009 = "MSG00009";
-        private static final String AA = "AA";
+    public static class Codes {
+        public static final String MSG00001 = "MSG00001";
+        public static final String MSG00002 = "MSG00002";
+        public static final String MSG00003 = "MSG00003";
+        public static final String MSG00004 = "MSG00004";
+        public static final String MSG00009 = "MSG00009";
     }
 
     private final String codice;
