@@ -12,7 +12,7 @@ import it.csipiemonte.gdp.gdporch.model.repository.GdpTestataRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpUtenteSftpRepository;
 import it.csipiemonte.gdp.sftp.SftpClientProducer;
 import it.csipiemonte.gdp.sftp.SftpSession;
-import io.quarkus.scheduler.Scheduled;
+import it.csipiemonte.gdp.gdporch.exception.GdpMessage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -53,7 +53,7 @@ public class CreaCartellaEdizioneAttesaJob {
         List<GdpDataUscita> expectedEditions = dataUscitaRepository.findExpectedTomorrow();
 
         if (expectedEditions.isEmpty()) {
-            LOG.info("Nessuna edizione attesa per domani (MSG00001)");
+            LOG.infof("Nessuna edizione attesa per domani (%s)", GdpMessage.F02_NO_OCCURRENCES.getCodice());
             return;
         }
 
@@ -68,9 +68,9 @@ public class CreaCartellaEdizioneAttesaJob {
             }
 
             if (successCount == expectedEditions.size()) {
-                LOG.info("Job F02 - Esito OK (MSG00009)");
+                LOG.infof("Job F02 - Esito OK (%s)", GdpMessage.F02_OK.getCodice());
             } else {
-                LOG.warnf("Job F02 completato con %d errori su %d (MSG00009 parziale)", expectedEditions.size() - successCount, expectedEditions.size());
+                LOG.warnf("Job F02 completato con %d errori su %d (%s parziale)", expectedEditions.size() - successCount, expectedEditions.size(), GdpMessage.F02_OK.getCodice());
             }
         } catch (Exception e) {
             LOG.error("Errore durante l'esecuzione del job F02", e);

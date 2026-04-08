@@ -12,6 +12,7 @@ import it.csipiemonte.gdp.gdporch.model.repository.GdpTestataRepository;
 import it.csipiemonte.gdp.sftp.SftpClientProducer;
 import it.csipiemonte.gdp.sftp.SftpSession;
 import it.csipiemonte.gdp.gdporch.utils.SftpUtils;
+import it.csipiemonte.gdp.gdporch.exception.GdpMessage;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.control.ActivateRequestContext;
 import jakarta.inject.Inject;
@@ -37,11 +38,11 @@ import java.util.Date;
  *   - in '_errata' se ci sono anomalie (duplicato o non trovata)
  *
  * Esiti previsti da specifica:
- *   MSG00001 - Nessuna nuova edizione trovata
- *   MSG00002 - Anomalia unicità: più testate trovate per la stessa cartella
- *   MSG00009 - Elaborazione completata con successo
+ *   F03_NO_NEW_EDITION - Nessuna nuova edizione trovata
+ *   F03_AMBIGUOUS_TESTATA - Anomalia unicità: più testate trovate per la stessa cartella
+ *   F03_OK - Elaborazione completata con successo
  *
- * Nota: MSG00003 non è previsto dalla specifica F03 ma viene gestito
+ * Nota: F03_TESTATA_NOT_FOUND non è previsto dalla specifica F03 ma viene gestito
  *       per robustezza nel caso in cui la testata non esista su DB.
  */
 @ApplicationScoped
@@ -50,10 +51,6 @@ public class CheckEdizioneAttesaJob {
     private static final DateTimeFormatter DF_LOG        = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final String            PATTERN_EDIZIONE = "^\\d{4}-\\d{2}-\\d{2}$";
 
-    private static final String MSG_OK        = "MSG00009";
-    private static final String MSG_VUOTO     = "MSG00001";
-    private static final String MSG_DUPLICATO = "MSG00002";
-    private static final String MSG_NON_TROVATO = "MSG00003"; // Gestito per robustezza, non previsto da specifica F03
 
     @ConfigProperty(name = "sftp.root.prefix")
     String sourceDir;
@@ -106,7 +103,7 @@ public class CheckEdizioneAttesaJob {
             List<ChannelSftp.LsEntry> testateSftp = SftpUtils.leggiCartelle(sftp, sourceDir);
 
             if (testateSftp.isEmpty()) {
-                Log.infof("%s - Nessuna nuova edizione trovata.", MSG_VUOTO);
+                Log.infof("%s - Nessuna nuova edizione trovata.", GdpMessage.F03_NO_NEW_EDITION.getCodice());
                 return;
             }
 
@@ -115,7 +112,7 @@ public class CheckEdizioneAttesaJob {
                 managedExecutor.runAsync(() -> processaTestataAsincrona(nomeTestata));
             }
 
-            Log.infof("%s - Task di scansione lanciati per %d testate.", MSG_OK, testateSftp.size());
+            Log.infof("%s - Task di scansione lanciati per %d testate.", GdpMessage.F03_OK.getCodice(), testateSftp.size());
 
         } catch (Exception e) {
             Log.errorf("Errore critico durante il monitoraggio SFTP: %s", e.getMessage(), e);
@@ -199,13 +196,13 @@ public class CheckEdizioneAttesaJob {
         if (testateDb.size() > 1) {
             String ids = testateDb.stream().map(t -> String.valueOf(t.id)).collect(Collectors.joining(", "));
             Log.errorf("%s - Trovate più testate per [%s]: [%s]. Spostamento in errata.",
-                    MSG_DUPLICATO, nomeCartella, ids);
-            procediErrore(sftp, nomeCartella, nomeEdizione, dtAcq, pathEdizione, files, MSG_DUPLICATO);
+                    GdpMessage.F03_AMBIGUOUS_TESTATA.getCodice(), nomeCartella, ids);
+            procediErrore(sftp, nomeCartella, nomeEdizione, dtAcq, pathEdizione, files, GdpMessage.F03_AMBIGUOUS_TESTATA);
 
         } else if (testateDb.isEmpty()) {
             Log.errorf("%s - Nessuna testata trovata per [%s]. Spostamento in errata.",
-                    MSG_NON_TROVATO, nomeCartella);
-            procediErrore(sftp, nomeCartella, nomeEdizione, dtAcq, pathEdizione, files, it.csipiemonte.gdp.gdporch.exception.GdpMessage.F03_TESTATA_NOT_FOUND.name());
+                    GdpMessage.F03_TESTATA_NOT_FOUND.getCodice(), nomeCartella);
+            procediErrore(sftp, nomeCartella, nomeEdizione, dtAcq, pathEdizione, files, GdpMessage.F03_TESTATA_NOT_FOUND);
 
         } else {
             procediSuccesso(sftp, testateDb.get(0), nomeEdizione, dtAcq, pathEdizione, files);
@@ -220,9 +217,6 @@ public class CheckEdizioneAttesaJob {
      * Sposta i PDF in '_tmp', crea i marker .OK in sorgente,
      * conta i file effettivamente presenti in tmp dopo lo spostamento
      * e registra il log su GDP_LOG.
-     *
-     * TODO F05 - Decommentare quando il servizio sarà disponibile:
-     *   elaboraF05Service.avviaAsync(testata.id, nomeEdizione, dtAcq, totaleFileInTmp);
      */
     private void procediSuccesso(ChannelSftp sftp, GdpTestata testata, String nomeEdizione,
                                  String dtAcq, String pathEdizione, List<ChannelSftp.LsEntry> files) {
@@ -243,7 +237,7 @@ public class CheckEdizioneAttesaJob {
             }
 
             int totaleFileInTmp = SftpUtils.contaFileInCartella(sftp, targetPath);
-            Integer idLog = inserisciGdpLog(testata.id, dtAcq, totaleFileInTmp, MSG_OK);
+            Integer idLog = inserisciGdpLog(testata.id, dtAcq, totaleFileInTmp, GdpMessage.F03_OK);
 
             Log.infof("Edizione [%s/%s] acquisita correttamente (Log ID: %d). File in TMP: %d",
                     testata.cartellaTestata, nomeEdizione, idLog, totaleFileInTmp);
@@ -263,17 +257,13 @@ public class CheckEdizioneAttesaJob {
             Log.errorf("Errore I/O SFTP in procediSuccesso per edizione [%s]: %s", nomeEdizione, e.getMessage(), e);
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Gestione anomalie (MSG00002 / MSG00003)
-    // -------------------------------------------------------------------------
-
+    
     /**
      * Sposta i PDF in '_errata' e registra l'anomalia su GDP_LOG.
      * FK_GDP_TESTATA = 0 come da specifica per i casi di anomalia.
      */
     private void procediErrore(ChannelSftp sftp, String nomeCartella, String nomeEdizione,
-                               String dtAcq, String pathEdizione, List<ChannelSftp.LsEntry> files, String errore) {
+                               String dtAcq, String pathEdizione, List<ChannelSftp.LsEntry> files, GdpMessage errore) {
         try {
             String targetPath = errataDir + "/" + nomeCartella + "/" + nomeEdizione;
             SftpUtils.creaDirectoryRicorsiva(sftp, targetPath);
@@ -292,7 +282,7 @@ public class CheckEdizioneAttesaJob {
             inserisciGdpLog(0, dtAcq, files.size(), errore);
 
             String ids = ""; // Se hai gli ID delle testate, puoi mapparli qui, altrimenti resta vuoto
-            if (errore.equals(MSG_DUPLICATO)) {
+            if (errore.equals(GdpMessage.F03_AMBIGUOUS_TESTATA)) {
                 // esempio: ids = "12, 15, 18"; // recuperabili da testataRepository se vuoi
             }
 
@@ -301,7 +291,7 @@ public class CheckEdizioneAttesaJob {
                             "Per %s dell’edizione %s sono stati trovati: %s%n" +
                             "I file%n%s%n" +
                             "sono stati spostati in %s",
-                    errore,
+                    errore.getCodice(),
                     nomeCartella,
                     nomeEdizione,
                     ids,
@@ -318,14 +308,14 @@ public class CheckEdizioneAttesaJob {
     }
 
     @Transactional
-    public Integer inserisciGdpLog(Integer fkTestata, String dataAcquisizione, Integer totaleFile, String esito) {
+    public Integer inserisciGdpLog(Integer fkTestata, String dataAcquisizione, Integer totaleFile, GdpMessage message) {
         try {
             LocalDateTime ldt = LocalDateTime.parse(dataAcquisizione, DF_LOG);
 
             AcquisizioneDetail dto = new AcquisizioneDetail();
             dto.setIdTestata(fkTestata);
             dto.setNroTotFile(totaleFile);
-            dto.setEsito(esito);
+            dto.setEsito(message.getCodice());
             dto.setTipoAcquisizione(AcquisizioneDetail.TipoAcquisizioneEnum.G);
             dto.setDataAcquisizione(Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant()));
 
@@ -336,24 +326,22 @@ public class CheckEdizioneAttesaJob {
             logEntity.persist();
 
             Log.infof("GDP_LOG registrato - ID: %d | FK_TESTATA: %d | Esito: %s | File: %d",
-                    logEntity.id, fkTestata, esito, totaleFile);
+                    logEntity.id, fkTestata, message.getCodice(), totaleFile);
 
             return logEntity.id;
 
         } catch (Exception e) {
             Log.errorf("Errore persistenza GDP_LOG - FK: %d | Esito: %s | Errore: %s",
-                    fkTestata, esito, e.getMessage(), e);
+                    fkTestata, message.getCodice(), e.getMessage(), e);
             return null;
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Utility F03
-    // -------------------------------------------------------------------------
-
     /**
      * Verifica la stabilità dei file controllando che la dimensione
      * non cambi per un intero intervallo — come da specifica F03.
+     * Ogni 15 secondi per un massimo di 3 minuti (stableSeconds).
+     * Sicuro perché eseguito nel ManagedExecutor, non nello scheduler.
      */
     private boolean isCartellaStabile(ChannelSftp sftp, String path) {
         final int intervalSec = 15;
@@ -402,14 +390,27 @@ public class CheckEdizioneAttesaJob {
 
     /**
      * Restituisce i file che non hanno ancora un marker .OK associato.
+     * Usato per evitare di riprocessare edizioni già elaborate.
      */
     private List<ChannelSftp.LsEntry> getFileSenzaMarker(ChannelSftp sftp, String path) {
         try {
-            java.util.Vector<ChannelSftp.LsEntry> vector = sftp.ls(path);
-            return new ArrayList<>(vector).stream()
+            // 1. Leggiamo tutto il contenuto della cartella
+            List<ChannelSftp.LsEntry> entries = new ArrayList<>(sftp.ls(path));
+
+            // 2. Creiamo un set con i nomi di tutti i marker presenti (es. "test.pdf.OK")
+            Set<String> markers = entries.stream()
+                    .map(ChannelSftp.LsEntry::getFilename)
+                    .filter(nome -> nome.endsWith(".OK"))
+                    .collect(Collectors.toSet());
+
+            // 3. Filtriamo i file: prendi il file SOLO SE non esiste il suo marker corrispondente
+            return entries.stream()
                     .filter(e -> !e.getAttrs().isDir())
                     .filter(e -> !e.getFilename().endsWith(".OK"))
+                    // Se esiste "articolo.pdf.OK", scarta "articolo.pdf"
+                    .filter(e -> !markers.contains(e.getFilename() + ".OK"))
                     .toList();
+
         } catch (SftpException e) {
             Log.warnf("Errore lettura file senza marker in [%s]: %s", path, e.getMessage());
             return List.of();
