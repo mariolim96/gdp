@@ -1138,3 +1138,13 @@ components:
           format: double
         provincia:
           type: string
+    LibraImportResponse:
+      type: object
+      description: Response from DAM LIBRA API after uploading a package
+      properties:
+        jobId:
+          type: string
+          description: Unique identifier for the import job in the DAM
+        status:
+          type: string
+          description: Processing status (e.g. SUBMITTED, FAILED)

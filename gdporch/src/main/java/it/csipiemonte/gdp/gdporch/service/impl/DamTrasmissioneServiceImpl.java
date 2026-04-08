@@ -118,7 +118,7 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
                 task.nroTentativo = 0;
                 task.sftpPath = "/" + damPrefix + zipName;
                 task.priorita = priorita;
-                task.stato = StatoCodaCaricamento.PRO;
+                task.stato = StatoCodaCaricamento.READY;
                 codaCaricamentoRepository.persist(task);
             }
 
