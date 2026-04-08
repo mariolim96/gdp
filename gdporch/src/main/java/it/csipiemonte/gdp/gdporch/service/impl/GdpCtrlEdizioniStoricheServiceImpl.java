@@ -114,9 +114,10 @@ public class GdpCtrlEdizioniStoricheServiceImpl implements GdpCtrlEdizioniStoric
                 spostaInErrata(pathEdizione,dataConsegna,cartellaTestata);
                 return;
             }
-          /* --- LOGICA F08-F09-F10 (Commentata per il Push) ---
+
         EdizioneInsertResponse res08 = edizioneService.insEdizione(idTestata,pathEdizione.toString(),dataEdizione,idLog);
             if(res08.getIdEdizione() != null) {
+                /* TODO: Da implementare quando F09 e F10 saranno pronte
                 // 5. Se F08 OK: Invocazione F09 (creaXMLEdizione) con PRIORITÀ 100
                 XmlCreationResponse res09 = damTrasmissioneService.creaXMLEdizione(idTestata, idLog, res08.getIdEdizione(), 100);
                 if("MSG00009".equals(res09.getCodice())) {
@@ -134,12 +135,14 @@ public class GdpCtrlEdizioniStoricheServiceImpl implements GdpCtrlEdizioniStoric
                     String descErrore = "MSG00004 - Errore f09: " + res09.getMessaggio();
                     registraEdizioneAnomala(idLog, pathEdizione, descErrore);
                 }
+                  --- FINE LOGICA F09-F10 --- */
+
             }else{
             String msgMsg = (res08 != null) ? res08.getMessaggio() : "Risposta nulla";
                 registraEdizioneAnomala(idLog,pathEdizione,"Errore f08: "+ msgMsg);
                 spostaInErrata(pathEdizione,dataConsegna,cartellaTestata);
             }
-            --- FINE LOGICA F08-F10 --- */
+
         Log.infof("F07: Edizione %s analizzata (Logica di invio commentata)", nomeCartella);
 
     }
@@ -198,7 +201,7 @@ public class GdpCtrlEdizioniStoricheServiceImpl implements GdpCtrlEdizioniStoric
         }
     }
 
-    /* --- METODI DI PERSISTENZA LOG (Commentati per Push) ---
+     //--- METODI DI PERSISTENZA LOG (Commentati per Push) ---
     private void salvaLogEdizione(Integer idLog, Path path, TipoEdizione tipo, ContatoriStorico ct, Integer idEdizione, String desc) {
         GdpLogEdizione logEdizione = new GdpLogEdizione();
         logEdizione.fkGdpLog = idLog;
@@ -224,7 +227,7 @@ public class GdpCtrlEdizioniStoricheServiceImpl implements GdpCtrlEdizioniStoric
             logRepository.persist(log);
         }
     }
-    */
+
 
     //Classe interna per i conteggi
     private static class ContatoriStorico{
