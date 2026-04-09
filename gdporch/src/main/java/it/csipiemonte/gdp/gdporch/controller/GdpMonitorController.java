@@ -11,7 +11,7 @@ import jakarta.ws.rs.core.Response;
 
 import java.time.LocalDate;
 
-@Path("/bo")
+@Path("/orch")
 public class GdpMonitorController {
 
     private final GdpMonitorService monitorService;
@@ -24,7 +24,7 @@ public class GdpMonitorController {
     @GET
     @Path("/acquisizioni")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getBoAcquisizioni(@QueryParam("data") LocalDate data, @QueryParam("tipo") String tipo) {
+    public Response getBoAcquisizioni(@QueryParam("dataAcquisizione") LocalDate data, @QueryParam("tipoAcquisizione") String tipo) {
         return Response.ok(monitorService.elencoAcquisizioni(tipo, data)).build();
     }
 }

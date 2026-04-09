@@ -884,8 +884,16 @@ components:
     AcquisizioneList:
       type: object
       required:
+        - codice
         - acquisizioni
       properties:
+        codice:
+          type: string
+          example: MSG00009
+          description: Process result code (MSG00009=OK, MSG00001=No result, etc.)
+        messaggio:
+          type: string
+          example: Elaborazione OK
         acquisizioni:
           type: array
           items:

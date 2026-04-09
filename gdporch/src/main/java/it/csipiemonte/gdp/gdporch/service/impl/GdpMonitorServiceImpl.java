@@ -42,14 +42,14 @@ public class GdpMonitorServiceImpl implements GdpMonitorService {
     public AcquisizioneList elencoAcquisizioni(String tipoAcquisizione, LocalDate dataAcquisizione) {
         TipoAcquisizione tipo;
         try {
-            tipo = TipoAcquisizione.valueOf(tipoAcquisizione);
-        } catch (IllegalArgumentException e) {
+            tipo = TipoAcquisizione.valueOf(tipoAcquisizione.toUpperCase());
+        } catch (Exception e) {
             throw new GdpException(GdpMessage.F12_MONITOR_ERROR);
         }
 
         List<GdpLog> logs = logRepository.findByTipoAcquisizioneAndDataAcquisizione(tipo, dataAcquisizione);
         if (logs == null || logs.isEmpty()) {
-            return new AcquisizioneList().acquisizioni(new ArrayList<>());
+            throw new GdpException(GdpMessage.F12_MONITOR_ERROR);
         }
 
         List<AcquisizioneSummary> summaries = new ArrayList<>();
@@ -69,10 +69,17 @@ public class GdpMonitorServiceImpl implements GdpMonitorService {
                 summary.setNomeTestata(testata.nomeTestata);
             }
 
-            // Get dataEdizione from first edition linked to this log
+            // Get dataEdizione and tipoEdizione from first edition linked to this log
             List<GdpLogEdizione> logEdizioni = logEdizioneRepository.findByLog(log.id);
             if (!logEdizioni.isEmpty()) {
-                Integer fkEdizione = logEdizioni.get(0).fkGdpEdizione;
+                GdpLogEdizione logEdizione = logEdizioni.get(0);
+                
+                // Human-readable tipoEdizione
+                if (logEdizione.tipoEdizione != null) {
+                    summary.setTipoEdizione(logEdizione.tipoEdizione.getDescrizione());
+                }
+
+                Integer fkEdizione = logEdizione.fkGdpEdizione;
                 GdpEdizione edizione = edizioneRepository.findById(fkEdizione);
                 if (edizione != null) {
                     summary.setDataEdizione(edizione.dataEdizione);
@@ -89,6 +96,9 @@ public class GdpMonitorServiceImpl implements GdpMonitorService {
             summaries.add(summary);
         }
 
-        return new AcquisizioneList().acquisizioni(summaries);
+        return new AcquisizioneList()
+                .codice(GdpMessage.F_OK.getCodice())
+                .messaggio(GdpMessage.F_OK.getDescrizioneDefault())
+                .acquisizioni(summaries);
     }
 }
