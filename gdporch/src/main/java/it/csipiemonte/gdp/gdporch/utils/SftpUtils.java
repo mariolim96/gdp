@@ -70,6 +70,34 @@ public class SftpUtils {
     }
 
     /**
+     * Conta ricorsivamente tutti i file presenti in una cartella e sottocartelle.
+     * 
+     * @param sftp Il canale SFTP attivo.
+     * @param path Il percorso della directory radice.
+     * @return Numero totale di file.
+     */
+    public static int contaFileRicorsivo(ChannelSftp sftp, String path) {
+        int count = 0;
+        try {
+            java.util.Vector<ChannelSftp.LsEntry> entries = sftp.ls(path);
+            for (ChannelSftp.LsEntry entry : entries) {
+                String name = entry.getFilename();
+                if (name.equals(".") || name.equals("..")) continue;
+
+                String fullPath = path.endsWith("/") ? path + name : path + "/" + name;
+                if (entry.getAttrs().isDir()) {
+                    count += contaFileRicorsivo(sftp, fullPath);
+                } else {
+                    count++;
+                }
+            }
+        } catch (SftpException e) {
+            Log.warnf("Errore durante il conteggio ricorsivo in [%s]: %s", path, e.getMessage());
+        }
+        return count;
+    }
+
+    /**
      * Crea ricorsivamente le directory se non presenti (equivalente a mkdir -p).
      * 
      * @param sftp Il canale SFTP attivo.
