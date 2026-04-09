@@ -38,6 +38,10 @@ public enum GdpMessage {
     F16_OK(Codes.MSG00009, "OK"),
     F16_INVALID_FILTERS(Codes.MSG00001, "Solo un filtro alla volta è consentito"),
 
+    // F17 - DB.getTestata
+    F17_OK(Codes.MSG00009, "OK"),
+    F17_NOT_FOUND(Codes.MSG00002, "Testata non trovata"),
+
     // F06 - checkConsegnaStorico
     F06_OK(Codes.MSG00009, "OK"),
     F06_NO_HISTORICAL(Codes.MSG00001, "Nessuna nuova consegna storica trovata"),

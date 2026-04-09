@@ -1,5 +1,6 @@
 package it.csipiemonte.gdp.gdporch.service;
 
+import it.csipiemonte.gdp.gdporch.dto.TestataDetail;
 import it.csipiemonte.gdp.gdporch.dto.TestataSummaryList;
 
 public interface GdpTestataService {
@@ -15,4 +16,13 @@ public interface GdpTestataService {
      * @return filtered list of testata summaries
      */
     TestataSummaryList elencoTestate(Boolean invioEdizione, String prov, Integer idTestata);
+
+    /**
+     * F17 — DB.getTestata
+     * Returns all fields of a specific testata.
+     *
+     * @param idTestata the testata ID
+     * @return detailed testata information
+     */
+    TestataDetail getTestataById(Integer idTestata);
 }
