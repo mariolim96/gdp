@@ -25,30 +25,55 @@ public class GdpTestataRepository implements PanacheRepositoryBase<GdpTestata, I
 
     public List<Object[]> findDateAttese(LocalDate dataInizio,
             LocalDate dataFine,
-            Long idTestata) {
+            Integer idTestata) {
 
-        String query = """
-                    SELECT
-                        t.id,
-                        t.nomeTestata,
-                        d.dataAttesa,
-                        d.sospesa
-                    FROM TestataEntity t
-                    JOIN PeriodicitaEntity p ON p.id = t.id
-                    JOIN DataUscitaEntity d ON d.periodicita.id = p.id
-                    WHERE
-                        (:idTestata IS NULL OR t.id = :idTestata)
-                    AND
-                        (:idTestata IS NOT NULL OR t.invioEdizioni = 1)
-                    AND
-                        d.dataAttesa BETWEEN :dataInizio AND :dataFine
-                """;
+        if (idTestata != null) {
+            String query = """
+                        SELECT
+                            t.id,
+                            t.cartellaTestata,
+                            d.dataAttesa,
+                            d.sospesa
+                        FROM GdpTestata t,
+                             GdpPeriodicita p,
+                             GdpDataUscita d
+                        WHERE
+                            p.fkGdpTestata = t.id
+                            AND d.fkGdpPeriodicita = p.id
+                            AND t.id = :idTestata
+                            AND d.dataAttesa BETWEEN :dataInizio AND :dataFine
+                        ORDER BY t.id, d.dataAttesa
+                    """;
 
-        return getEntityManager()
-                .createQuery(query, Object[].class)
-                .setParameter("idTestata", idTestata)
-                .setParameter("dataInizio", dataInizio)
-                .setParameter("dataFine", dataFine)
-                .getResultList();
+            return getEntityManager()
+                    .createQuery(query, Object[].class)
+                    .setParameter("idTestata", idTestata)
+                    .setParameter("dataInizio", dataInizio)
+                    .setParameter("dataFine", dataFine)
+                    .getResultList();
+        } else {
+            String query = """
+                        SELECT
+                            t.id,
+                            t.cartellaTestata,
+                            d.dataAttesa,
+                            d.sospesa
+                        FROM GdpTestata t,
+                             GdpPeriodicita p,
+                             GdpDataUscita d
+                        WHERE
+                            p.fkGdpTestata = t.id
+                            AND d.fkGdpPeriodicita = p.id
+                            AND t.invioEdizione = true
+                            AND d.dataAttesa BETWEEN :dataInizio AND :dataFine
+                        ORDER BY t.id, d.dataAttesa
+                    """;
+
+            return getEntityManager()
+                    .createQuery(query, Object[].class)
+                    .setParameter("dataInizio", dataInizio)
+                    .setParameter("dataFine", dataFine)
+                    .getResultList();
+        }
     }
 }
