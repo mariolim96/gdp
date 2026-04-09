@@ -12,4 +12,8 @@ public class GdpEdizioneRepository implements PanacheRepositoryBase<GdpEdizione,
     public Optional<GdpEdizione> findByTestataAndData(Integer fkGdpTestata, LocalDate dataEdizione) {
         return find("fkGdpTestata = ?1 and dataEdizione = ?2", fkGdpTestata, dataEdizione).firstResultOptional();
     }
+
+    public GdpEdizione findByData(LocalDate dataEdizione) {
+        return find("dataEdizione", dataEdizione).firstResult();
+    }
 }

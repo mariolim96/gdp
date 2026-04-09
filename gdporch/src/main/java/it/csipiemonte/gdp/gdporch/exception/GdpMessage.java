@@ -64,8 +64,9 @@ public enum GdpMessage {
     F08_INSERT_PAGINA_FAILED(Codes.MSG00002, "Error inserting GDP_PAGINA"),
 
     // F09 - creaXMLEdizione
-    F09_XML_CREATION_FAILED(Codes.MSG00002, "Error creating XML file"),
-    F09_ZIP_CREATION_FAILED(Codes.MSG00003, "Error creating ZIP file"),
+    F09_XML_OK(Codes.MSG00009, "Elaborazione OK"),
+    F09_XML_CREATION_FAILED(Codes.MSG00002, "ERRORE nella creazione del file XML"),
+    F09_ZIP_CREATION_FAILED(Codes.MSG00003, "ERRORE nella creazione del file ZIP\n"),
 
     // F10 - inviaEdizione
     F10_UPLOAD_EXECUTED(Codes.MSG00009, "<MSG> DAM upload executed"),
