@@ -20,4 +20,5 @@ public class GdpLogEdizioneRepository implements PanacheRepositoryBase<GdpLogEdi
     public Optional<GdpLogEdizione> findByEdizione(Integer fkGdpEdizione) {
         return find("fkGdpEdizione", fkGdpEdizione).firstResultOptional();
     }
+
 }
