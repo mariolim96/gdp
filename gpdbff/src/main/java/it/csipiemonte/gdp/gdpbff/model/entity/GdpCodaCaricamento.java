@@ -11,6 +11,10 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Entity representing an import task for DAM transmission.
+ * Corresponds to GDP_IMPORT_TASK (also known as GDP_CODA_CARICAMENTO).
+ */
 @Entity
 @Table(name = "GDP_CODA_CARICAMENTO")
 public class GdpCodaCaricamento extends PanacheEntityBase {

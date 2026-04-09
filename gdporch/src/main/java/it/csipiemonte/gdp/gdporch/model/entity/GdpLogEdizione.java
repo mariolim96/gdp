@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione;
+import it.csipiemonte.gdp.gdporch.model.enums.StatoDamEdizione;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 
@@ -55,6 +56,10 @@ public class GdpLogEdizione extends PanacheEntityBase {
 
     @Column(name = "JOB_ID", length = 128)
     public String jobId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "STATO", length = 64)
+    public StatoDamEdizione stato;
 
     @Column(name = "DESCRIZIONE", length = 8192)
     public String descrizione;

@@ -549,23 +549,12 @@ paths:
         Caller (F04/F07) then invokes F10 asynchronously.
 
         NOT called by gdpbff.'
-      parameters:
-        - name: idLog
-          in: query
-          required: true
-          schema:
-            type: integer
-            format: int32
-        - name: priorita
-          in: query
-          required: true
-          description: 0=daily editions, 100=historical editions
-          schema:
-            type: integer
-            format: int32
-            enum:
-              - 0
-              - 100
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/XmlCreationRequest'
       responses:
         '200':
           description: OK — zip created and queued
@@ -811,6 +800,21 @@ components:
           format: int32
           example: 12345
           description: ID of the inserted or updated edition (GDP_EDIZIONE.ID_GDP_EDIZIONE).
+    XmlCreationRequest:
+      type: object
+      required:
+        - idLog
+        - priorita
+      properties:
+        idLog:
+          type: integer
+          format: int32
+          description: ID of the GdpLog record
+        priorita:
+          type: integer
+          format: int32
+          enum: [0, 100]
+          description: "0=daily editions, 100=historical editions"
     XmlCreationResponse:
       type: object
       required:
@@ -890,6 +894,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AcquisizioneSummary'
+    StatoDamEdizione:
+      type: string
+      enum:
+        - SUBMITTED
+        - FAILED
+        - COMPLETED
+      description: Status of DAM transmission for the edition.
     AcquisizioneSummary:
       type: object
       required:
@@ -924,6 +935,8 @@ components:
           type: integer
         esito:
           type: string
+        statoDam:
+          $ref: '#/components/schemas/StatoDamEdizione'
           example: <MSG>Elaborazione OK</MSG>
           description: 'Raw status string containing rendering tags mapping to UC-05:
 
@@ -993,6 +1006,8 @@ components:
         jobId:
           type: string
           description: DAM Libra Job ID
+        statoDam:
+          $ref: '#/components/schemas/StatoDamEdizione'
         descrizione:
           type: string
           example: NL – page003.pdf
@@ -1138,3 +1153,13 @@ components:
           format: double
         provincia:
           type: string
+    LibraImportResponse:
+      type: object
+      description: Response from DAM LIBRA API after uploading a package
+      properties:
+        jobId:
+          type: string
+          description: Unique identifier for the import job in the DAM
+        status:
+          type: string
+          description: Processing status (e.g. SUBMITTED, FAILED)

@@ -3,6 +3,7 @@ package it.csipiemonte.gdp.gdporch.controller;
 import it.csipiemonte.gdp.gdporch.api.ApiApi;
 import it.csipiemonte.gdp.gdporch.dto.EdizioneInsertResponse;
 import it.csipiemonte.gdp.gdporch.dto.GenericProcessResponse;
+import it.csipiemonte.gdp.gdporch.dto.XmlCreationRequest;
 import it.csipiemonte.gdp.gdporch.dto.XmlCreationResponse;
 import it.csipiemonte.gdp.gdporch.service.DamTrasmissioneService;
 import it.csipiemonte.gdp.gdporch.service.GdpCtrlEdizioneAcquisitaService;
@@ -43,9 +44,9 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
     }
 
     @Override
-    public Response orchInternalCreaXML(Integer idLog, Integer priorita, Integer idTestata,
-            Integer idEdizione) {
-        XmlCreationResponse result = trasmissionService.creaXMLEdizione(idTestata, idLog, idEdizione, priorita);
+    public Response orchInternalCreaXML(Integer idTestata, Integer idEdizione, XmlCreationRequest xmlCreationRequest) {
+        XmlCreationResponse result = trasmissionService.creaXMLEdizione(idTestata, xmlCreationRequest.getIdLog(), idEdizione, 
+                xmlCreationRequest.getPriorita() != null ? xmlCreationRequest.getPriorita().value() : 0);
         return Response.ok(result).build();
     }
 }

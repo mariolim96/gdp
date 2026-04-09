@@ -73,13 +73,13 @@ Below is a comprehensive list of all potential Odoo tickets required to complete
 ## EPIC 4: DAM Transmission Pipeline (Phase 6)
 *Focus: Packaging assets and transmitting to the CSI DAM system.*
 
-### Ticket: Implement XML Schema Generation (F09)
+### Ticket: Implement XML Schema Generation (F09) [DEVELOPING]
 **Type**: Dependent
 **Depends On**: F08
 **Description**: Build the `creaXMLEdizione` service. Transform DB metadata into XML aligning with XSD `GdP-STD-04-V01-Validazione_metadati_flussoFTP.xsd`. Zip all generated assets (`.xml`, `.pdf`, `.txt`) into `/_dam` target folders. 
 **Estimate**: 18h
 
-### Ticket: Implement DAM Courier Service and Uploads (F10)
+### Ticket: Implement DAM Courier Service and Uploads (F10) [DEVELOPING]
 **Type**: Dependent
 **Depends On**: F09
 **Description**: Implement the `inviaEdizione` (F10) recurring daemon. Interrogate `GDP_CODA_CARICAMENTO`, send ZIP payloads to the RestClient integrated DAM endpoints (`POST /api/v2/imports`). Handle REST faults via the queue system.

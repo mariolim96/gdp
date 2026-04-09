@@ -125,6 +125,8 @@ CREATE TABLE GDP_LOG_EDIZIONE
 	FILE_XML boolean NULL,	-- Indica se il file è stato generato
 	FILE_ZIP boolean NULL,	-- Indica se il file è stato generato
 	JOB_ID varchar(128) NULL,	-- Identificativo dell’operazione attivata sul DAM per il caricamento dell’edizione, restituito dal servizio richiamato
+	-- TODO questo campo era mancante
+    STATO varchar(64) NULL,	-- Stato caricamento DAM (SUBMITTED, FAILED, COMPLETED)
 	DESCRIZIONE varchar(8192) NULL	-- Eventuali dettagli su qualsiasi tipo di anomialia rilevata
 );
 
