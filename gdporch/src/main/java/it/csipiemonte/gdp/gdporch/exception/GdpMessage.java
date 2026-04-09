@@ -10,7 +10,7 @@ public enum GdpMessage {
     F_ERROR(Codes.MSG00001, "Errore generico di elaborazione"),
     F_IO_ERROR(Codes.MSG00002, "Errore di Input/Output durante l'elaborazione"),
     F_NOT_FOUND(Codes.MSG00002, "Entita non trovata"),
-    
+
     // F01 - configDTEdizioneAttesa
     F01_NO_OCCURRENCES(Codes.MSG00001, "Nessuna occorrenza trovata per i parametri inseriti"),
     F01_NO_MENSILITA(Codes.MSG00002, "Testata attiva senza MENSILITA definita"),
@@ -34,6 +34,10 @@ public enum GdpMessage {
     // F05 - sospensioneEdizioneAttesa / F18 - verifDateAttese / F15 - ricerca
     F05_NO_RESULTS(Codes.MSG00001, "Nessun risultato trovato per i parametri inseriti"),
 
+    // F16 - DB.getElencoTestate
+    F16_OK(Codes.MSG00009, "OK"),
+    F16_INVALID_FILTERS(Codes.MSG00001, "Solo un filtro alla volta è consentito"),
+
     // F06 - checkConsegnaStorico
     F06_OK(Codes.MSG00009, "OK"),
     F06_NO_HISTORICAL(Codes.MSG00001, "Nessuna nuova consegna storica trovata"),
@@ -45,7 +49,7 @@ public enum GdpMessage {
     F07_FORMAT_ERROR(Codes.MSG00002, "Edition moved (format error)"),
     F07_DB_ERROR(Codes.MSG00003, "<E104> DB insert failed (F08 error)"),
     F07_DAM_ERROR(Codes.MSG00004, "<E105> DAM package failed (F09 error)"),
-    
+
     // F08 - insEdizione
     F08_INSERT_EDIZIONE_FAILED(Codes.MSG00001, "Error inserting GDP_EDIZIONE"),
     F08_INSERT_PAGINA_FAILED(Codes.MSG00002, "Error inserting GDP_PAGINA"),
@@ -70,7 +74,7 @@ public enum GdpMessage {
 
     // F21 - attivaCODA
     F21_MAX_RETRIES(Codes.MSG00001, "ATTENZIONE! Superato il numero massimo di tentativi ammessi");
-    
+
     public static class Codes {
         public static final String MSG00001 = "MSG00001";
         public static final String MSG00002 = "MSG00002";
