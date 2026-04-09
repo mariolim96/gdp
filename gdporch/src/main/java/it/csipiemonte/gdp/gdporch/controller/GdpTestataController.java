@@ -4,6 +4,7 @@ import it.csipiemonte.gdp.gdporch.service.GdpTestataService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -25,5 +26,12 @@ public class GdpTestataController {
             @QueryParam("prov") String prov,
             @QueryParam("idTestata") Integer idTestata) {
         return Response.ok(gdpTestataService.elencoTestate(invioEdizione, prov, idTestata)).build();
+    }
+
+    @GET
+    @Path("/{idTestata}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getBoTestataById(@PathParam("idTestata") Integer idTestata) {
+        return Response.ok(gdpTestataService.getTestataById(idTestata)).build();
     }
 }
