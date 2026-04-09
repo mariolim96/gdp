@@ -802,7 +802,7 @@ components:
       required:
         - idTestata
         - idLog
-        - dataEdizione
+        - idEdizione
         - priorita
       properties:
         idTestata:
@@ -813,15 +813,16 @@ components:
           type: integer
           format: int32
           description: ID of the GdpLog record
-        dataEdizione:
-          type: string
-          format: date
-          description: Date of the edition (yyyy-mm-dd)
+        idEdizione:
+          type: integer
+          format: int32
+          description: ID of the GdpEdizione record
         priorita:
           type: integer
           format: int32
           enum: [0, 100]
           description: "0=daily editions, 100=historical editions"
+
     XmlCreationResponse:
       type: object
       required:
@@ -909,6 +910,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AcquisizioneSummary'
+    StatoDamEdizione:
+      type: string
+      enum:
+        - SUBMITTED
+        - FAILED
+        - COMPLETED
+      description: Status of DAM transmission for the edition.
     AcquisizioneSummary:
       type: object
       required:
@@ -943,6 +951,8 @@ components:
           type: integer
         esito:
           type: string
+        statoDam:
+          $ref: '#/components/schemas/StatoDamEdizione'
           example: <MSG>Elaborazione OK</MSG>
           description: 'Raw status string containing rendering tags mapping to UC-05:
 
@@ -1012,6 +1022,8 @@ components:
         jobId:
           type: string
           description: DAM Libra Job ID
+        statoDam:
+          $ref: '#/components/schemas/StatoDamEdizione'
         descrizione:
           type: string
           example: NL – page003.pdf

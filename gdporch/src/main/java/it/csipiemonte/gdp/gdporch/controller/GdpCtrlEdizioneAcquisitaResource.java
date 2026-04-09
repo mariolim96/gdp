@@ -3,6 +3,7 @@ package it.csipiemonte.gdp.gdporch.controller;
 import it.csipiemonte.gdp.gdporch.api.ApiApi;
 import it.csipiemonte.gdp.gdporch.dto.EdizioneInsertResponse;
 import it.csipiemonte.gdp.gdporch.dto.GenericProcessResponse;
+import it.csipiemonte.gdp.gdporch.dto.XmlCreationRequest;
 import it.csipiemonte.gdp.gdporch.dto.XmlCreationResponse;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpEdizione;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpLogEdizione;
@@ -49,12 +50,13 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
     }
 
     @Override
-    public Response orchInternalCreaXML(Integer idLog, Integer priorita, Integer idTestata,
-            Integer idEdizione) {
-        Optional<GdpLogEdizione> logEd = gdpLogEdizioneRepository.find("fkGdpLog = ?1 and fkGdpEdizione = ?2",idLog,idEdizione).stream().findFirst();
-        String pathRecuperato = logEd.map(le -> le.pathEdizione).orElse("");
-        //Chiamata F09 con firma nuova
-        XmlCreationResponse result = trasmissionService.creaXMLEdizione(idTestata, idLog, idEdizione, priorita,pathRecuperato);
+    public Response orchInternalCreaXML(XmlCreationRequest xmlCreationRequest) {
+        XmlCreationResponse result = trasmissionService.creaXMLEdizione(
+                xmlCreationRequest.getIdTestata(), 
+                xmlCreationRequest.getIdLog(), 
+                xmlCreationRequest.getIdEdizione(), 
+                xmlCreationRequest.getPriorita() != null ? xmlCreationRequest.getPriorita() : 0);
+
         return Response.ok(result).build();
     }
 }

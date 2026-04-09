@@ -13,10 +13,10 @@ Esiste una relazione uno-a-molti tra GDP_LOG e GDP_LOG_EDIZIONE, in particolar m
 Proposte / Suggerimenti per la Risoluzione:
 
 1. Passare `idLogEdizione` come parametro (Raccomandata)
-La soluzione più performante, coerente e senza ambiguità. Consiste nel modificare preventivamente le signature di F08 (`insEdizione`) e F09 (`creaXMLEdizione`) per accettare direttamente la Primary Key (`Integer idLogEdizione`), chiedendo agli orchestratori chiamanti (F04 e F07) di restituirla in seguito alla persistenza del record e fornirla a valle alla catena.
+   La soluzione più performante, coerente e senza ambiguità. Consiste nel modificare preventivamente le signature di F08 (`insEdizione`) e F09 (`creaXMLEdizione`) per accettare direttamente la Primary Key (`Integer idLogEdizione`), chiedendo agli orchestratori chiamanti (F04 e F07) di restituirla in seguito alla persistenza del record e fornirla a valle alla catena.
 
 2. Ricerca univoca tramite Path (Alternativa)
-Nel caso non si volessero alterare i parametri d'ingresso, andrebbe forzato l'uso combinato di `fk_gdp_log` unito alla validazione del parametro `pathEdizione` (creato appositamente univoco per edizione a partire dalla release V02 della documentazione). Suggerendo in questo scenario anche la formalizzazione di una costraint di unicità a database per tutelarsi da record duplicati per `fk_gdp_log, path_edizione`.
+   Nel caso non si volessero alterare i parametri d'ingresso, andrebbe forzato l'uso combinato di `fk_gdp_log` unito alla validazione del parametro `pathEdizione` (creato appositamente univoco per edizione a partire dalla release V02 della documentazione). Suggerendo in questo scenario anche la formalizzazione di una costraint di unicità a database per tutelarsi da record duplicati per `fk_gdp_log, path_edizione`.
 
 domanda 3
 Servizio: FTPregolare e DAMtrasmissione (F04, F07 e F10)
@@ -30,22 +30,22 @@ domanda 4
 Servizio: DAMtrasmissione (F09 e F10)
 Problema: Disallineamento sugli stati in GDP_CODA_CARICAMENTO.
 Descrizione:
-Alla fine dell'operazione F09, viene inserito un record nella coda in GDP_IMPORT_TASK / GDP_CODA_CARICAMENTO associandogli come STATO = 'PRO'. 
-Tuttavia, il task schedulato (F10) incaricato di prendere i file da inviare interroga i record e processa solo quelli con STATO = 'READY'. 
+Alla fine dell'operazione F09, viene inserito un record nella coda in GDP_IMPORT_TASK / GDP_CODA_CARICAMENTO associandogli come STATO = 'PRO'.
+Tuttavia, il task schedulato (F10) incaricato di prendere i file da inviare interroga i record e processa solo quelli con STATO = 'READY'.
 Proposta/Richiesta: È necessario chiarire se "PRO" è l'abbreviazione di "PRONTO" e va normalizzato in 'READY'. F09 dovrebbe inserire i record già nello stato 'READY', oppure in alternativa F10 dovrebbe ricercare i record nello stato 'PRO' / convertirli a 'READY'.
 
 domanda 5
 Servizio: MONITOR (F21 attivaCODA e F14 preparaMAIL)
 Problema: L'uso di idLog come unico parametro crea ambiguità analogamente a quanto riportato nella domanda 2.
 Descrizione:
-L'operazione F21 permette la rimessa in coda di una trasmissione fallita partendo da 'idLog'. Nel caso di flussi storici, un singolo identificativo è legato a decine di edizioni log (ognuna col suo GdpLogEdizione). Usando l'idLog parentale, F21 andrebbe a riattivare inavvertitamente e ciecamente tutte le code associate al flusso, perdendo la granularità. 
-Allo stesso modo, l'operazione F14 usa 'idLog' per recuperare la 'DATA_EDIZIONE' (in corrispondenza 1-a-N nel caso storico) da un'occorrenza legata ai log per inserirla nel template della mail. 
+L'operazione F21 permette la rimessa in coda di una trasmissione fallita partendo da 'idLog'. Nel caso di flussi storici, un singolo identificativo è legato a decine di edizioni log (ognuna col suo GdpLogEdizione). Usando l'idLog parentale, F21 andrebbe a riattivare inavvertitamente e ciecamente tutte le code associate al flusso, perdendo la granularità.
+Allo stesso modo, l'operazione F14 usa 'idLog' per recuperare la 'DATA_EDIZIONE' (in corrispondenza 1-a-N nel caso storico) da un'occorrenza legata ai log per inserirla nel template della mail.
 Proposta/Richiesta: Modificare le interfacce affinché richiedano o preferiscano 'idLogEdizione' al posto di 'idLog' in caso di recupero granulare, permettendo al sistema di selezionare univocamente l'anomalia log-edizione desiderata.
 
 domanda 6
 Servizio: FTPregolare (F04)
 Problema: Contraddizione sul posizionamento e filtraggio di GDP_DATA_USCITA (rimozione campo ANNO).
-Descrizione: 
+Descrizione:
 Nella sezione relativa al "DB Schema" di gdporch-spec.md, viene sottolineato come: "Important: The table has DT_INIZIO + DT_FINE range fields (not ANNO as previously documented)". Sostanzialmente, rimuove l'esistenza del campo ANNO.
 Tuttavia, all'interno del flow dell'operazione F04, uno dei controlli è di interrogare il Database filtrando per forza per "ANNO = current_year".
 Proposta/Richiesta: Aggiornare la query documentata in F04 in modo che si basi sul filtraggio usando DATA_ATTESA, al massimo contestualizzato tramite range (DT_INIZIO e DT_FINE) in luogo del rimosso ANNO.
@@ -53,7 +53,7 @@ Proposta/Richiesta: Aggiornare la query documentata in F04 in modo che si basi s
 domanda 7
 Servizio: DAMtrasmissione (F09 e F10)
 Problema: Il campo STATO in GDP_IMPORT_TASK / GDP_CODA_CARICAMENTO non è presente sul DataBase.
-Descrizione: 
+Descrizione:
 Nelle specifiche operative (ad es. per F09, F10 e F21) si fa reiterato riferimento all'impostazione e lettura del campo `STATO` sulla tabella `GDP_IMPORT_TASK` (oppure `GDP_CODA_CARICAMENTO`) con valori come 'PRO', 'READY', 'SUBMITTED', 'FAILED'. Tuttavia, come confermato dalle analisi dello schema DB reale, questo campo non risulta essere presente nel database originario. Purtroppo per via di come è pensata l'architettura, risulta indispensabile poter filtrare i record della coda per il loro stato.
 Proposta/Richiesta: Confermare ufficialmente l'aggiunta del campo `STATO` allo schema del Database (modificando il DDL) per poter gestire correttamente il ciclo di vita e la persistenza della coda di caricamenti verso il DAM.
 
@@ -79,17 +79,18 @@ Servizio: FTPregolare (F04) / FTPsaltuario (F07)
 Problema: F04 in features-be.md richiama F09 con `<IDEdizione>` come parametro, ma in features-be.md la firma di F09 dichiara il terzo parametro come "IDEdizione Formato yyyy-mm-dd Dt" (tipo data, non intero).
 Descrizione:
 In features-be.md, l'interfaccia di richiamo (input) di F09 elenca:
-  - Parametro 3: `IDEdizione` — "Formato yyyy-mm-dd Dt" (tipo data)
-Il campo di F04 che invoca F09 passa `<IDEdizione>` (ID numerico restituito da F08, non una data).
-Analogamente, gdporch-spec.md (sezione F09) chiarisce che il parametro 3 è `IDEdizione = ID_EDIZIONE` di tipo `Integer`.
-Proposta/Richiesta: Correggere la tabella dei parametri di input di F09 in features-be.md: il parametro 3 deve essere `IDEdizione` di tipo `Integer` (FK a GDP_EDIZIONE), non una data in formato yyyy-mm-dd.
+
+- Parametro 3: `IDEdizione` — "Formato yyyy-mm-dd Dt" (tipo data)
+  Il campo di F04 che invoca F09 passa `<IDEdizione>` (ID numerico restituito da F08, non una data).
+  Analogamente, gdporch-spec.md (sezione F09) chiarisce che il parametro 3 è `IDEdizione = ID_EDIZIONE` di tipo `Integer`.
+  Proposta/Richiesta: Correggere la tabella dei parametri di input di F09 in features-be.md: il parametro 3 deve essere `IDEdizione` di tipo `Integer` (FK a GDP_EDIZIONE), non una data in formato yyyy-mm-dd.
 
 domanda 11
 Servizio: FTPregolare (F07) — Modalità di richiamo
 Problema: F07 in features-be.md dichiara di essere richiamato "dall'operazione F07" (autoreferenziale), non da F06.
 Descrizione:
 In features-be.md, alla sezione F07, la "Modalità di richiamo" recita:
-  "Il servizio è richiamato in modalità "asincrona" dall'operazione F07."
+"Il servizio è richiamato in modalità "asincrona" dall'operazione F07."
 Questo è chiaramente un errore tipografico/copia-incolla: F07 non può richiamare sé stesso. Dalla logica del sistema e da gdporch-spec.md risulta che F07 è richiamato da **F06** (FTPsaltuario.checkConsegnaStorico).
 Proposta/Richiesta: Correggere features-be.md: la "Modalità di richiamo" di F07 deve riportare "richiamato in modalità asincrona dall'operazione **F06**".
 
@@ -99,7 +100,7 @@ Problema: Disallineamento nel nome del campo filtro `INVIO_EDIZIONI` vs `INVIO_E
 Descrizione:
 In features-be.md, le operazioni F01 e F18 filtrano le testate attive usando il vincolo `GDP_TESTATA.INVIO_EDIZIONI = 1` (con la S finale — plurale).
 In gdporch-spec.md, la tabella `GDP_TESTATA` documenta esplicitamente il campo come `INVIO_EDIZIONE` (singolare, boolean), e segnala:
-  "Important: The column is `INVIO_EDIZIONE` (singular), not `INVIO_EDIZIONI`."
+"Important: The column is `INVIO_EDIZIONE` (singular), not `INVIO_EDIZIONI`."
 Proposta/Richiesta: Chiarire e uniformare il nome del campo: qual è il nome esatto nella DDL del database? Tutti i riferimenti in features-be.md (F01, F18) devono essere aggiornati di conseguenza.
 
 domanda 13
@@ -141,9 +142,9 @@ Servizio: MONITOR (F12 — elencoAcquisizioni)
 Problema: Il campo `NomeTestata` in features-be.md è mappato su `GDP_TESTATA.ID_GDP_TESTATA` (un ID numerico) anziché su `GDP_TESTATA.NOME_TESTATA`.
 Descrizione:
 In features-be.md, nella sezione "Dettaglio passi operazione" di F12, il mapping è:
-  `NomeTestata = GDP_TESTATA.ID_GDP_TESTATA`
+`NomeTestata = GDP_TESTATA.ID_GDP_TESTATA`
 Questo è chiaramente errato: l'ID numerico della testata non è il nome. In gdporch-spec.md il mapping corretto è:
-  `nomeTestata → GDP_TESTATA.NOME_TESTATA` (campo 1.4).
+`nomeTestata → GDP_TESTATA.NOME_TESTATA` (campo 1.4).
 Proposta/Richiesta: Correggere features-be.md per F12: il campo `NomeTestata` deve mapparsi su `GDP_TESTATA.NOME_TESTATA`.
 
 domanda 18
@@ -158,7 +159,7 @@ Servizio: MONITOR (F13 — dettaglioAcquisizione)
 Problema: Il campo `NomeTestata` in features-be.md è mappato su `GDP_TESTATA.ID_GDP_TESTATA` anziché su `GDP_TESTATA.NOME_TESTATA` (stessa anomalia del F12).
 Descrizione:
 In features-be.md, nella sezione "Dettaglio passi operazione" di F13, il mapping riporta:
-  `NomeTestata = GDP_TESTATA.ID_GDP_TESTATA`
+`NomeTestata = GDP_TESTATA.ID_GDP_TESTATA`
 Anche qui si tratta di un errore: dovrebbe essere `GDP_TESTATA.NOME_TESTATA`.
 In gdporch-spec.md il campo 1.3 è correttamente mappato come `GDP_TESTATA.NOME_TESTATA`.
 Proposta/Richiesta: Allineare features-be.md per F13 al mapping corretto.
@@ -176,12 +177,12 @@ Servizio: DAMtrasmissione (F10 — inviaEdizione)
 Problema: In features-be.md, F10 aggiorna `STATO` e `JOB_ID` su `GDP_LOG_EDIZIONE`, ma questi campi nella spec DB appartengono a `GDP_IMPORT_TASK` (`GDP_CODA_CARICAMENTO`).
 Descrizione:
 In features-be.md, per F10 in caso di "status = FAILED" viene indicato:
-  `GDP_LOG_EDIZIONE.JOB_ID = jobId`
-  `GDP_LOG_EDIZIONE.STATO = "FAILED"`
+`GDP_LOG_EDIZIONE.JOB_ID = jobId`
+`GDP_LOG_EDIZIONE.STATO = "FAILED"`
 E per "status = SUBMITTED":
-  `GDP_LOG_EDIZIONE.FILE_ZIP = True`
-  `GDP_LOG_EDIZIONE.JOB_ID = jobId`
-  `GDP_LOG_EDIZIONE.STATO = "SUBMITTED"`
+`GDP_LOG_EDIZIONE.FILE_ZIP = True`
+`GDP_LOG_EDIZIONE.JOB_ID = jobId`
+`GDP_LOG_EDIZIONE.STATO = "SUBMITTED"`
 Il campo `JOB_ID` esiste effettivamente su `GDP_LOG_EDIZIONE`, ma il campo `STATO` con valori 'FAILED'/'SUBMITTED'/'READY' è definito su `GDP_IMPORT_TASK` (= `GDP_CODA_CARICAMENTO`), non su `GDP_LOG_EDIZIONE`. In gdporch-spec.md la situazione è la stessa.
 Proposta/Richiesta: Chiarire se F10 deve aggiornare lo `STATO` su `GDP_IMPORT_TASK.STATO` (come sembra logico, dato che è la coda di caricamento che gestisce il ciclo di vita) e il `JOB_ID` su `GDP_LOG_EDIZIONE.JOB_ID` (per tracciabilità). In features-be.md e gdporch-spec.md allineare i riferimenti alle tabelle corrette.
 
@@ -190,13 +191,14 @@ Servizio: FTPregolare (F04) — Codici tipoEdizione ancora AT/PT in features-be.
 Problema: Nonostante la domanda 9 già documenti la discrepanza, in features-be.md (F04 "Dettaglio passi operazione") i codici `"AT"` e `"PT"` rimangono in uso anche nella logica decisionale (classificazione edizione).
 Descrizione:
 In features-be.md (righe ~358-363) il flusso F04 classifica come segue:
-  `dataEdizione > data elaborazione → tipoEdizione = "AT"` [anticipataria]
-  `dataEdizione < data elaborazione → tipoEdizione = "PT"` [posticipataria]
+`dataEdizione > data elaborazione → tipoEdizione = "AT"` [anticipataria]
+`dataEdizione < data elaborazione → tipoEdizione = "PT"` [posticipataria]
 Questo genera non solo un disallineamento sui codici (AT vs AN, PT vs PO) ma anche un'inversione logica rispetto a gdporch-spec.md:
-  - gdporch-spec.md: `dataEdizione > processing date → "AN"` (early = anticipataria) ✓
-  - features-be.md: `dataEdizione > data elaborazione → "AT"` — stessa logica, codice diverso.
-In aggiunta features-be.md non è stato aggiornato a V03 mentre gdporch-spec.md sì.
-Proposta/Richiesta: (Ribadisce domanda 9) Confermare ufficialmente il mapping AT→AN e PT→PO e aggiornare features-be.md.
+
+- gdporch-spec.md: `dataEdizione > processing date → "AN"` (early = anticipataria) ✓
+- features-be.md: `dataEdizione > data elaborazione → "AT"` — stessa logica, codice diverso.
+  In aggiunta features-be.md non è stato aggiornato a V03 mentre gdporch-spec.md sì.
+  Proposta/Richiesta: (Ribadisce domanda 9) Confermare ufficialmente il mapping AT→AN e PT→PO e aggiornare features-be.md.
 
 domanda 23
 Servizio: MONITOR (F15 — ricercaAcquisizioni)
@@ -211,11 +213,12 @@ Servizio: FTPregolare (F01 e F18) — INVIO_EDIZIONI ancora presente in gdporch-
 Problema: Nonostante gdporch-spec.md corregga il nome del campo a `INVIO_EDIZIONE` (singolare) nella sezione DB Schema, nelle sezioni operative F01 e F18 scrive ancora `INVIO_EDIZIONI` (plurale).
 Descrizione:
 In gdporch-spec.md:
-  - Sezione DB Schema (GDP_TESTATA, riga ~110-112): il campo è correttamente documentato come `INVIO_EDIZIONE` (singolare).
-  - Sezione F01, tabella input parametro 3 (riga ~238): `If empty, process all testate with INVIO_EDIZIONI=1` — usa il plurale.
-  - Sezione F18, tabella input parametro 3 (riga ~535): `If empty, all testate with INVIO_EDIZIONI=1` — usa il plurale.
-Questo crea autocontraddizione interna a gdporch-spec.md stesso.
-Proposta/Richiesta: Correggere in gdporch-spec.md anche le sezioni F01 e F18 per usare `INVIO_EDIZIONE` (singolare) nei parametri di input, allineandole alla documentazione dello schema DB.
+
+- Sezione DB Schema (GDP_TESTATA, riga ~110-112): il campo è correttamente documentato come `INVIO_EDIZIONE` (singolare).
+- Sezione F01, tabella input parametro 3 (riga ~238): `If empty, process all testate with INVIO_EDIZIONI=1` — usa il plurale.
+- Sezione F18, tabella input parametro 3 (riga ~535): `If empty, all testate with INVIO_EDIZIONI=1` — usa il plurale.
+  Questo crea autocontraddizione interna a gdporch-spec.md stesso.
+  Proposta/Richiesta: Correggere in gdporch-spec.md anche le sezioni F01 e F18 per usare `INVIO_EDIZIONE` (singolare) nei parametri di input, allineandole alla documentazione dello schema DB.
 
 domanda 25
 Servizio: DB (F08) — Campo GDP_PAGINA.ANNO_EDIZIONE assente sia in features-be.md che in gdporch-spec.md operativo
@@ -247,11 +250,21 @@ Servizio: FTPregolare (F01) — Tipo di MENSILITA
 Problema: In features-be.md `MENSILITA` deve supportare valori decimali (es. 0.5 = bimensile/quindicinale), ma gdporch-spec.md lo dichiara come `integer`.
 Descrizione:
 In features-be.md (F01), la descrizione operativa usa:
-  - `MENSILITA > 0` per il caso A (periodicità mensile o multi-mensile)
-  - `MENSILITA = 0` per il caso B (periodicità inferiore al mese)
-  - Nella nota 1 viene specificato: "0,5 = bimensile o quindicinale" come valore ammesso
-Tuttavia in gdporch-spec.md, la sezione DB Schema dichiara:
+
+- `MENSILITA > 0` per il caso A (periodicità mensile o multi-mensile)
+- `MENSILITA = 0` per il caso B (periodicità inferiore al mese)
+- Nella nota 1 viene specificato: "0,5 = bimensile o quindicinale" come valore ammesso
+  Tuttavia in gdporch-spec.md, la sezione DB Schema dichiara:
   `MENSILITA (integer — not double/float)`
-Con un integer non è possibile rappresentare il valore 0.5 (bimensile).
-gdporch-spec.md stesso risolve parzialmente questo dicendo: "Twice-monthly publications use MENSILITA=1 with two dates in GG_PERIODICITA (e.g. G01;G15)" — ma features-be.md non documenta questa convenzione e usa esplicitamente 0.5.
-Proposta/Richiesta: Allineare i documenti: confermare che `MENSILITA` è integer e che le pubblicazioni bimensili usano `MENSILITA=1` con due date in `GG_PERIODICITA`, aggiornando features-be.md per eliminare il riferimento a 0.5. Oppure rendere `MENSILITA` di tipo numerico (decimal/float) nello schema DB.
+  Con un integer non è possibile rappresentare il valore 0.5 (bimensile).
+  gdporch-spec.md stesso risolve parzialmente questo dicendo: "Twice-monthly publications use MENSILITA=1 with two dates in GG_PERIODICITA (e.g. G01;G15)" — ma features-be.md non documenta questa convenzione e usa esplicitamente 0.5.
+  Proposta/Richiesta: Allineare i documenti: confermare che `MENSILITA` è integer e che le pubblicazioni bimensili usano `MENSILITA=1` con due date in `GG_PERIODICITA`, aggiornando features-be.md per eliminare il riferimento a 0.5. Oppure rendere `MENSILITA` di tipo numerico (decimal/float) nello schema DB.
+
+domanda 2
+GDP_IMPORT_TASK (= GDP_CODA_CARICAMENTO) ?
+
+domanda 3
+
+- **Schema Discrepancy (Spec vs DB):** The specification (UC F10) mentions updating `GDP_LOG_EDIZIONE.STATO`. However, the current database DDL and JPA entities only provide a `DESCRIZIONE` field.
+  - **Action taken:** Status updates ("SUBMITTED", "FAILED") are persisted in the `DESCRIZIONE` field.
+  - **Recommendation:** If a structured `STATO` column is required for reporting, a DB migration should be planned.

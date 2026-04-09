@@ -88,6 +88,8 @@ _Focus: Packaging assets and transmitting to the CSI DAM system._
 
 ### Ticket: Implement XML Schema Generation (F09) [DEVELOPING]
 
+### Ticket: Implement XML Schema Generation (F09) [DEVELOPING]
+
 **Type**: Dependent
 **Depends On**: F08
 **Description**: Build the `creaXMLEdizione` service. Transform DB metadata into XML aligning with XSD `GdP-STD-04-V01-Validazione_metadati_flussoFTP.xsd`. Zip all generated assets (`.xml`, `.pdf`, `.txt`) into `/_dam` target folders.

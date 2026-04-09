@@ -29,7 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
@@ -131,12 +131,13 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
             // Insert Import Task (F10)
             GdpCodaCaricamento task = new GdpCodaCaricamento();
             task.fkGdpLogEdizione = logEd.id;
-            task.dataInserimento = LocalDate.now();
+            task.dataInserimento = LocalDateTime.now();
             task.nroTentativo = 0;
             task.sftpPath = "/" + damPrefix + zipName;
             task.priorita = priorita;
-            task.stato = StatoCodaCaricamento.PRO;
+            task.stato = StatoCodaCaricamento.READY;
             codaCaricamentoRepository.persist(task);
+
 
             response.setCodice(GdpMessage.F_OK.getCodice());
             response.setNomeFileCompresso(zipName);
