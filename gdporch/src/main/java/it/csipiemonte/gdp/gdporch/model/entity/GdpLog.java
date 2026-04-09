@@ -9,8 +9,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import it.csipiemonte.gdp.gdporch.model.enums.TipoAcquisizione;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 
 @Entity
 @Table(name = "GDP_LOG")
@@ -28,11 +30,12 @@ public class GdpLog extends PanacheEntityBase {
     @Column(name = "FK_GDP_TESTATA", nullable = false)
     public Integer fkGdpTestata;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "TIPO_ACQUISIZIONE", nullable = false, length = 16)
-    public String tipoAcquisizione; // G = giornaliera S = storica
+    public TipoAcquisizione tipoAcquisizione; // G = giornaliera S = storica
 
     @Column(name = "DT_ACQUISIZIONE", nullable = false)
-    public LocalDate dataAcquisizione;
+    public LocalDateTime dataAcquisizione;
 
     @Column(name = "TOTALE_FILE_ACQUISITI")
     public Integer totaleFileAcquisiti;
