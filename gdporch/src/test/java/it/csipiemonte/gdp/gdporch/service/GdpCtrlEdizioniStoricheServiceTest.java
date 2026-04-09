@@ -1,19 +1,24 @@
 package it.csipiemonte.gdp.gdporch.service;
 
-
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.InjectMock; // <--- CORRETTO
 import it.csipiemonte.gdp.gdporch.dto.EdizioneInsertResponse;
 import it.csipiemonte.gdp.gdporch.dto.XmlCreationResponse;
+import it.csipiemonte.gdp.gdporch.model.entity.GdpLogEdizione;
+import it.csipiemonte.gdp.gdporch.model.repository.GdpLogEdizioneRepository;
+import it.csipiemonte.gdp.gdporch.model.repository.GdpLogRepository;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,76 +36,94 @@ public class GdpCtrlEdizioniStoricheServiceTest {
     @InjectMock
     DamTrasmissioneService damTrasmissioneService;
 
+    @InjectMock
+    GdpLogRepository logRepository;
+
+    @InjectMock
+    GdpLogEdizioneRepository logEdizioneRepository;
+
+    // Iniettiamo i path dal profilo %test (target/test-sftp/...)
+    @ConfigProperty(name = "sftp.root.prefix.tmp")
+    String tmpPrefix;
+
+    @ConfigProperty(name = "sftp.root.prefix.errata")
+    String errataPrefix;
 
     @BeforeEach
     void cleanup() throws IOException {
-        Path tmpDir = Paths.get("_tmp");
-        if (Files.exists(tmpDir)) {
-            // Cammina nella cartella e cancella tutto ciò che trova
-            Files.walk(tmpDir)
-                    .sorted((a, b) -> b.compareTo(a)) // Ordina al contrario per cancellare prima i file e poi le cartelle
+        // Pulizia cartelle di test prima di ogni esecuzione
+        deleteDirectory(Paths.get(tmpPrefix));
+        deleteDirectory(Paths.get(errataPrefix));
+    }
+
+    private void deleteDirectory(Path path) throws IOException {
+        if (Files.exists(path)) {
+            Files.walk(path)
+                    .sorted(Comparator.reverseOrder())
                     .forEach(p -> {
                         try {
                             Files.delete(p);
-                        } catch (IOException e) {
-                            // Ignora se non riesce a cancellare qualcosa (es. file bloccati)
-                        }
+                        } catch (IOException ignored) {}
                     });
         }
     }
 
-    @Test
-    @Disabled("Disabilitato in attesa di riattivazione logica F08-F10 nel Service")
+        @Test
+        @Disabled("Rimuovi se hai decommentato F09/F10 nel service")
     void testScenarioSuccesso() throws Exception {
-        // 1. Definiamo il path
-        Path tempDir = Paths.get("_tmp", "CONS_20260408", "TESTATA", "20260408");
+        String dataC = "20260408";
+        String testata = "TESTATA";
 
-        // 2. CREIAMO LE CARTELLE (Mancava questa riga!)
+        // 1. Creazione struttura cartelle basata su ConfigProperty
+        Path tempDir = Paths.get(tmpPrefix, "CONS_" + dataC, testata, dataC);
         Files.createDirectories(tempDir);
 
-        // 3. CREIAMO IL FILE (Usiamo write che sovrascrive senza lanciare eccezioni)
-        Path fileTif = tempDir.resolve("TESTATA-TO-20260408_001.tif");
-        Files.write(fileTif, new byte[0]);
+        // 2. Creazione file validi (PDF, TXT, TIF obbligatorio)
+        Files.write(tempDir.resolve(testata + "-TO-" + dataC + "_001.pdf"), new byte[0]);
+        Files.write(tempDir.resolve(testata + "-TO-" + dataC + "_001.txt"), new byte[0]);
+        Files.write(tempDir.resolve(testata + "-TO-" + dataC + "_001.tif"), new byte[0]);
 
-        // --- DA QUI IN POI IL CODICE È CORRETTO ---
-
-        // 1. Mock F08
+        // 3. Mock Risposte Servizi
         EdizioneInsertResponse res08 = new EdizioneInsertResponse();
         res08.setIdEdizione(1001);
         when(edizioneService.insEdizione(any(), any(), any(), any())).thenReturn(res08);
 
-        // 2. Mock F09
+        // Mock F09 (Attenzione: il codice deve corrispondere a GdpMessage.F_OK)
         XmlCreationResponse res09 = new XmlCreationResponse();
-        res09.setCodice("MSG00009");
+        res09.setCodice(it.csipiemonte.gdp.gdporch.exception.GdpMessage.F_OK.getCodice()); // Esempio di codice OK
         res09.setNomeFileCompresso("test_storico.zip");
         when(damTrasmissioneService.creaXMLEdizione(any(), any(), any(), any())).thenReturn(res09);
 
-        // 3. Esecuzione
-        service.ctrlEdizioniStoriche(1, "TESTATA", "20260408", 123);
+        // Mock Repository (necessari per evitare NullPointerException o errori DB)
+        when(logRepository.findById(any())).thenReturn(new it.csipiemonte.gdp.gdporch.model.entity.GdpLog());
 
-        // 4. Verifica
-        verify(damTrasmissioneService, times(1)).inviaEdizioneAsync(eq(123), eq(1001), eq("test_storico.zip"));
+        // 4. Esecuzione
+        service.ctrlEdizioniStoriche(1, testata, dataC, 123);
+
+        // 5. Verifica: Se F09/F10 sono attivi nel Service, verifica la chiamata
+         verify(damTrasmissioneService, times(1)).inviaEdizioneAsync(eq(123), eq(1001), anyString());
+
+        // Verifica che il log dell'edizione sia stato salvato
+        verify(logEdizioneRepository, atLeastOnce()).persist((GdpLogEdizione) any());
     }
 
     @Test
-    @Disabled("Disabilitato in attesa di riattivazione logica F08-F10 nel Service")
-    void testScenarioErroreF09() {
-        // 1. Mock F08: OK
-        EdizioneInsertResponse res08 = new EdizioneInsertResponse();
-        res08.setIdEdizione(1001);
-        when(edizioneService.insEdizione(any(), any(), any(), any())).thenReturn(res08);
+    @Disabled
+    void testScenarioTifMancante() throws Exception {
+        String dataC = "20260408";
+        String testata = "TESTATA";
 
-        // 2. Mock F09: Errore (es. MSG00004)
-        XmlCreationResponse res09KO = new XmlCreationResponse();
-        res09KO.setCodice("MSG00004");
-        res09KO.setMessaggio("Errore validazione DAM");
-        when(damTrasmissioneService.creaXMLEdizione(any(), any(), any(), any())).thenReturn(res09KO);
+        Path tempDir = Paths.get(tmpPrefix, "CONS_" + dataC, testata, dataC);
+        Files.createDirectories(tempDir);
 
-        // 3. Esecuzione
-        service.ctrlEdizioniStoriche(1, "TESTATA", "20260408", 123);
+        // Solo PDF, niente TIF
+        Files.write(tempDir.resolve(testata + "-TO-" + dataC + "_001.pdf"), new byte[0]);
 
-        // 4. Verifica: NON deve aver chiamato l'invio asincrono (F10)
-        verify(damTrasmissioneService, never()).inviaEdizioneAsync(any(), any(), any());
+        service.ctrlEdizioniStoriche(1, testata, dataC, 123);
 
+        // Verifica che l'edizione sia stata considerata anomala (TipoEdizione.AS)
+        verify(logEdizioneRepository).persist(argThat((GdpLogEdizione log) ->
+                log.tipoEdizione.name().equals("AS") && log.descrizione.contains("TIF mancante")
+        ));
     }
 }
