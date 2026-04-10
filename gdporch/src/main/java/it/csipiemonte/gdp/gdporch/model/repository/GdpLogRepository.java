@@ -40,6 +40,13 @@ public class GdpLogRepository implements PanacheRepositoryBase<GdpLog, Integer> 
                 .firstResult();
     }
 
+    public LocalDate findDataEdizioneByLogEdizioneId(Integer idLogEdizione) {
+        return find("SELECT e.dataEdizione FROM GdpLogEdizione le JOIN le.gdpEdizione e " +
+                "WHERE le.id = ?1", idLogEdizione)
+                .project(LocalDate.class)
+                .firstResult();
+    }
+
     public List<GdpLog> findByTipoAcquisizioneAndDataAcquisizione(TipoAcquisizione tipoAcquisizione,
             LocalDate dataAcquisizione) {
         return list("tipoAcquisizione = ?1 and date(dataAcquisizione) = ?2", tipoAcquisizione, dataAcquisizione);

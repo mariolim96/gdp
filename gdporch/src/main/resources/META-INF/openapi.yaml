@@ -364,52 +364,39 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           description: Conflict — maximum retry attempts exceeded (NRO_MAX_TENTATIVI=10)
-  /orch/acquisizioni/{idLog}/mail/prepara:
-    parameters:
-      - $ref: '#/components/parameters/idLog'
+  /orch/acquisizioni/mail/prepara: # URL senza parametri, tutto passa dal JSON
     post:
       tags:
         - orch-monitor
       operationId: orchPreparaMAIL
       summary: F14 — MONITOR.preparaMAIL
-      description: 'Compose email payload from GDP_MAIL template — does NOT send.
-
-        Reads recipient from GDP_UTENTESFTP.EMAIL via GDP_LOG.FK_GDP_UTENTEFTP.
-
-        Substitutes <[dataED]> and <[nomeTestata]> placeholders.
-
-        Called by gdpbff for POST /bo/acquisizioni/{idLog}/mail/prepara.'
+      description: 'Compone il payload della mail. Riceve idLog, idLogEdizione e tipoMail nel body JSON.'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
+              required: # Campi obbligatori nel JSON
+                - idLog
                 - tipoMail
+                - idLogEdizione
               properties:
+                idLog:
+                  type: integer
+                  format: int32
+                  description: "ID della spedizione generale (GDP_LOG)"
+                idLogEdizione:
+                  type: integer
+                  format: int32
+                  description: "ID specifico dell'edizione (opzionale per flussi storici)"
                 tipoMail:
                   type: string
-                  enum:
-                    - GW001
-                    - GE001
-                    - SW001
-                    - SE001
-                    - ST001
-                  description: 'COD_MAIL from GDP_MAIL table.
-
-                    GW001=Daily warning (edizione da integrare)
-
-                    GE001=Daily error (edizione non caricata)
-
-                    SW001=Historical warning
-
-                    SE001=Historical error
-
-                    ST001=Historical full delivery error'
+                  enum: [ GW001, GE001, SW001, SE001, ST001 ]
+                  description: "Codice del template della mail"
       responses:
         '200':
-          description: Mail payload composed
+          description: Mail payload composto correttamente
           content:
             application/json:
               schema:
@@ -1056,7 +1043,7 @@ components:
         - oggetto
         - testo
       properties:
-        esito:
+        Esito:
           type: string
         from:
           type: string
