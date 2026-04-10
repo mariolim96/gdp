@@ -55,7 +55,7 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
                 xmlCreationRequest.getIdTestata(), 
                 xmlCreationRequest.getIdLog(), 
                 xmlCreationRequest.getIdEdizione(), 
-                xmlCreationRequest.getPriorita() != null ? xmlCreationRequest.getPriorita() : 0);
+                xmlCreationRequest.getPriorita() != null ? xmlCreationRequest.getPriorita().value() : 0);
 
         return Response.ok(result).build();
     }
