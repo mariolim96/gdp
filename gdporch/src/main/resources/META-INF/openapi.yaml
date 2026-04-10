@@ -403,30 +403,25 @@ paths:
                 $ref: '#/components/schemas/MailComposition'
         '404':
           $ref: '#/components/responses/NotFound'
-  /orch/acquisizioni/{idLog}/mail/invia:
-    parameters:
-      - $ref: '#/components/parameters/idLog'
+  /orch/acquisizioni/mail/invia:
     post:
       tags:
         - orch-monitor
       operationId: orchInvioMAIL
       summary: F22 — MONITOR.invioMAIL
-      description: 'Send email using the payload from F14.
-
-        Operator may have edited oggetto and testo before this call.
-
-        Called by gdpbff for POST /bo/acquisizioni/{idLog}/mail/invia.'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MailComposition'
+              $ref: '#/components/schemas/MailSendRequest' # <--- Il nuovo DTO pulito
       responses:
         '200':
-          description: Mail sent successfully
-        '500':
-          description: Mail send failed
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericProcessResponse'
   /api/internal/acquisizioni/{idLog}/valida:
     parameters:
       - $ref: '#/components/parameters/idLog'
@@ -644,6 +639,31 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    MailSendRequest:
+      type: object
+      required:
+        - from
+        - to
+        - host
+        - porta
+        - oggetto
+        - testo
+      properties:
+        from:
+          type: string
+          format: email
+        to:
+          type: string
+          format: email
+        host:
+          type: string
+        porta:
+          type: integer
+          format: int32
+        oggetto:
+          type: string
+        testo:
+          type: string
     ErrorResponse:
       type: object
       required:
