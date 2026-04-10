@@ -115,10 +115,8 @@ public class GdpCtrlEdizioniStoricheServiceImpl implements GdpCtrlEdizioniStoric
            //---STEP 5:F09/F10
             try {
 
-                // Passiamo anche il pathEdiz come stringa per risolvere l'ambiguità nel log
-                String pathString = pathEdiz.toAbsolutePath().toString();
                 // Invocazione sincrona F09 con Priorità 100
-                XmlCreationResponse res09 = damTrasmissioneService.creaXMLEdizione(ctx.idTestata, ctx.idLog, res08.getIdEdizione(), 100,pathString);
+                XmlCreationResponse res09 = damTrasmissioneService.creaXMLEdizione(ctx.idTestata, ctx.idLog, res08.getIdEdizione(), 100);
 
                 if (res09 != null && GdpMessage.F_OK.getCodice().equals(res09.getCodice())) {
                     // Esito Positivo F09 -> Invocazione Asincrona F10

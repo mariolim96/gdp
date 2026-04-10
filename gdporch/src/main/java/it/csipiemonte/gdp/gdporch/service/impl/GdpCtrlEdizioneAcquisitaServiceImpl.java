@@ -153,7 +153,7 @@ public class GdpCtrlEdizioneAcquisitaServiceImpl implements GdpCtrlEdizioneAcqui
         }
 
         // Step 5 - Invoke F09 (synchronous)
-        var f09Response = damTrasmissioneService.creaXMLEdizione(idTestata, idLog, f08Response.getIdEdizione(), 0, editionPath.toString());
+        var f09Response = damTrasmissioneService.creaXMLEdizione(idTestata, idLog, f08Response.getIdEdizione(), 0);
         if (!GdpMessage.F_OK.getCodice().equals(f09Response.getCodice())) {
             handleProcessingError(editionPath, idLog, GdpMessage.F04_DAM_ERROR.getCodice(), f09Response.getMessaggio());
             response.setCodice(f09Response.getCodice());
