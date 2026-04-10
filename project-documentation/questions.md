@@ -275,3 +275,13 @@ Descrizione: Le specifiche ufficiali (V03) definiscono il parametro S0 solo nel 
 Caso B (Pattern nWS0 con n > 1): Come deve essere calcolata la periodicità se l'intervallo settimanale è superiore a 1?
 
 Caso A (Pattern GnS0): Il parametro S0 è ammesso anche per la periodicità mensile? Se sì, quale logica di calcolo deve seguire?
+
+
+domanda 31
+Servizio: DAMtrasmissione (F09 - creaXMLEdizione)
+Problema: Incongruenza del tipo di dato per il parametro IDEdizione (Data vs Intero).
+Descrizione: Nella specifica dell'interfaccia di input per l'operazione F09, il parametro 3 (IDEdizione) è indicato come tipo Dt (Data) con formato yyyy-mm-dd.
+
+Tuttavia, si riscontrano le seguenti criticità:
+
+Coerenza DB: Il nome del campo suggerisce un legame con ID_EDIZIONE, che nel database è un identificativo numerico intero (PK).
