@@ -249,6 +249,7 @@ gdporch reads from and writes to the shared GdP PostgreSQL database. No SUPERUSE
 `GG_PERIODICITA` field in `GDP_PERIODICITA` can be in two forms:
 
 Form 1 — Direct day of month:
+
 - `NULL` → publisher must supply date list manually (Open Problem #1)
 - `G00` → publication day undefined (default: 1st of month)
 - `G01` → 1st of month
@@ -256,6 +257,7 @@ Form 1 — Direct day of month:
 - `G01;G15` → 1st and 15th of month (when `MENSILITA=0.5`, i.e., bimonthly)
 
 Form 2 — Ordinal weekday of month (`GnSm`):
+
 - `G1S6` → first Saturday of month
 - `G3S5` → third Friday of month
 
@@ -263,6 +265,19 @@ Calculation steps:
 1. Find first publication date `MM0` starting from January 1st based on `GG_PERIODICITA`
 2. Derive subsequent dates: `MMi+1 = MMi + MENSILITA` (in months)
 3. Stop when next date falls beyond the input period
+
+**Day codes for `Sm` patterns:**
+- `S0` = daily (quotidiano — in form `GnS0` indicates the whole n-th week)
+- `S1` = Monday
+- `S2` = Tuesday
+- `S3` = Wednesday
+- `S4` = Thursday
+- `S5` = Friday
+- `S6` = Saturday
+- `S7` = Sunday
+
+**Extension Pattern (Case A):**
+- `GnS0` → returns all publication dates (Monday–Sunday) belonging to the **n-th complete week** of the month.
 
 **Algorithm — Case B: MENSILITA = 0 (sub-monthly periodicity)**
 
