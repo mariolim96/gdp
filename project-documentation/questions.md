@@ -3,6 +3,11 @@ Servizio: FTPregolare
 Modalità di richiamo
 Il servizio è richiamato in modalità “asincrona” dal BE applicativo.
 per be applicativo cosa si intende ? e il bff ? e un comando cli ?
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> 8cdb2be (Update file domande)
 
 domanda 2
 Servizio: GdpEdizioneService (F08) / DamTrasmissioneService (F09)
@@ -255,3 +260,11 @@ Tuttavia in gdporch-spec.md, la sezione DB Schema dichiara:
 Con un integer non è possibile rappresentare il valore 0.5 (bimensile).
 gdporch-spec.md stesso risolve parzialmente questo dicendo: "Twice-monthly publications use MENSILITA=1 with two dates in GG_PERIODICITA (e.g. G01;G15)" — ma features-be.md non documenta questa convenzione e usa esplicitamente 0.5.
 Proposta/Richiesta: Allineare i documenti: confermare che `MENSILITA` è integer e che le pubblicazioni bimensili usano `MENSILITA=1` con due date in `GG_PERIODICITA`, aggiornando features-be.md per eliminare il riferimento a 0.5. Oppure rendere `MENSILITA` di tipo numerico (decimal/float) nello schema DB.
+
+domanda 29
+Servizio:F21 - MONITOR.attivaCODA
+Problema: Impossibilità di identificare univocamente il record in GDP_CODA_CARICAMENTO tramite il solo idLog.
+Descrizione:
+L'analisi dello schema ER (Entity-Relationship) evidenzia che la relazione tra GDP_LOG e GDP_LOG_EDIZIONE è di tipo 1-a-N (uno-a-molti). In contesti di caricamento massivo (flussi storici), un singolo idLog può generare decine di record in GDP_LOG_EDIZIONE.
+Poiché la tabella GDP_CODA_CARICAMENTO punta a GDP_LOG_EDIZIONE (tramite FK_GDP_LOG_EDIZIONE), l'invio del solo idLog rende il sistema incapace di determinare quale specifica edizione debba essere portata in stato "READY".
+
