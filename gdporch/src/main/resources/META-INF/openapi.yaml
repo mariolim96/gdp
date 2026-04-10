@@ -813,10 +813,10 @@ components:
           type: integer
           format: int32
           description: ID of the GdpLog record
-        dataEdizione:
-          type: string
-          format: date
-          description: Date of the edition (yyyy-mm-dd)
+        idEdizione:
+          type: integer
+          format: int32
+          description: ID of the GdpEdizone record
         priorita:
           type: integer
           format: int32

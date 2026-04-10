@@ -66,7 +66,7 @@ public class CreaXmlEdizioneJob {
         //Recuperiamo i dati
         GdpLogEdizione logEdizione = logEdizioneRepository.findById(body.getIdLog());
         GdpTestata testata = testataRepository.findById(body.getIdTestata());
-        GdpEdizione edizione = edizioneRepository.findByData(body.getDataEdizione());
+        GdpEdizione edizione = edizioneRepository.findById(body.getIdEdizione());
 
         // Se l'edizione non esiste, usiamo il messaggio di errore dell'Enum
         if (edizione == null) {

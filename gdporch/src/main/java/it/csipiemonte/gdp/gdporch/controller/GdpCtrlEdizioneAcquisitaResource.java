@@ -54,7 +54,7 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
         Optional<GdpLogEdizione> logEd = gdpLogEdizioneRepository.find("fkGdpLog = ?1 and fkGdpEdizione = ?2",idLog,idEdizione).stream().findFirst();
         String pathRecuperato = logEd.map(le -> le.pathEdizione).orElse("");
         //Chiamata F09 con firma nuova
-        XmlCreationResponse result = trasmissionService.creaXMLEdizione(idTestata, idLog, idEdizione, priorita,pathRecuperato);
+        XmlCreationResponse result = trasmissionService.creaXMLEdizione(idTestata, idLog, idEdizione, priorita);
         return Response.ok(result).build();
     }
 }
