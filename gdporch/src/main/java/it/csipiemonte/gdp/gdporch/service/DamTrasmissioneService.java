@@ -14,8 +14,8 @@ public interface DamTrasmissioneService {
      * @param priorita Priority (0 or 100)
      * @return Execution result with zip filename
      */
-    XmlCreationResponse creaXMLEdizione(Integer idTestata, Integer idLog, Integer idEdizione, Integer priorita);
+    XmlCreationResponse creaXMLEdizione(Integer idTestata, Integer idLog, Integer idEdizione, Integer priorita,String pathString);
 
     // F10: Notifica che il file è pronto per essere inviato al DAM
-    //void inviaEdizioneAsync(Integer idLog, Integer idEdizione, String nomeFileCompresso);
+    void inviaEdizioneAsync(Integer idLog, Integer idEdizione, String nomeFileCompresso);
 }
