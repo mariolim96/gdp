@@ -2,6 +2,7 @@ package it.csipiemonte.gdp.gdporch.service.impl;
 
 import io.quarkus.logging.Log;
 import it.csipiemonte.gdp.gdporch.dto.EdizioneInsertResponse;
+import it.csipiemonte.gdp.gdporch.dto.XmlCreationResponse;
 import it.csipiemonte.gdp.gdporch.exception.GdpMessage;
 import it.csipiemonte.gdp.gdporch.model.entity.*;
 import it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione;
@@ -40,6 +41,7 @@ public class GdpCtrlEdizioniStoricheServiceImpl implements GdpCtrlEdizioniStoric
     @Inject GdpLogEdizioneRepository logEdizioneRepository;
     @Inject GdpUtenteSftpRepository utenteSftpRepository;
     @Inject GdpEdizioneService edizioneService;
+    @Inject DamTrasmissioneService damTrasmissioneService;
 
     // Self-injection necessaria per invocare metodi @Transactional nello stesso bean
     @Inject GdpCtrlEdizioniStoricheServiceImpl self;
@@ -105,14 +107,35 @@ public class GdpCtrlEdizioniStoricheServiceImpl implements GdpCtrlEdizioniStoric
         }
 
         // --- STEP 4: PERSISTENZA E LOGICA F08 ---
-        EdizioneInsertResponse res = edizioneService.insEdizione(ctx.idTestata, pathEdiz.toAbsolutePath().toString(), dataEdiz, ctx.idLog);
+        EdizioneInsertResponse res08 = edizioneService.insEdizione(ctx.idTestata, pathEdiz.toAbsolutePath().toString(), dataEdiz, ctx.idLog);
 
-        if (res != null && res.getIdEdizione() != null) {
+        if (res08 != null && res08.getIdEdizione() != null) {
             // Edizione corretta: TIPO_EDIZIONE = ST
-            salvaLogEdizione(ctx.idLog, pathEdiz, TipoEdizione.ST, ct, res.getIdEdizione(), GdpMessage.F_OK.getDescrizioneDefault());
+            salvaLogEdizione(ctx.idLog, pathEdiz, TipoEdizione.ST, ct, res08.getIdEdizione(), GdpMessage.F_OK.getDescrizioneDefault());
+           //---STEP 5:F09/F10
+            try {
+
+                // Passiamo anche il pathEdiz come stringa per risolvere l'ambiguità nel log
+                String pathString = pathEdiz.toAbsolutePath().toString();
+                // Invocazione sincrona F09 con Priorità 100
+                XmlCreationResponse res09 = damTrasmissioneService.creaXMLEdizione(ctx.idTestata, ctx.idLog, res08.getIdEdizione(), 100,pathString);
+
+                if (res09 != null && GdpMessage.F_OK.getCodice().equals(res09.getCodice())) {
+                    // Esito Positivo F09 -> Invocazione Asincrona F10
+                    damTrasmissioneService.inviaEdizioneAsync(ctx.idLog, res08.getIdEdizione(), res09.getNomeFileCompresso());
+                } else {
+                    // Esito Negativo F09
+                    String erroreF09 = (res09 != null) ? res09.getMessaggio() : "Risposta nulla da F09";
+                    String msgErrF09 = "MSG00004 - Errore in F09: " + erroreF09;
+                    registraESposta(pathEdiz, ctx, TipoEdizione.AS, ct, msgErrF09);
+                }
+            } catch (Exception e) {
+                Log.error("Errore tecnico durante invocazione F09/F10 per edizione: " + nomeCartella, e);
+                registraESposta(pathEdiz, ctx, TipoEdizione.AS, ct, "Errore tecnico integrazione flussi downstream");
+            }
         } else {
             // Errore durante l'inserimento DB (F08 fallito)
-            String err = (res != null) ? res.getMessaggio() : "Risposta nulla F08";
+            String err = (res08 != null) ? res08.getMessaggio() : "Risposta nulla F08";
             registraESposta(pathEdiz, ctx, TipoEdizione.AS, ct, buildMsg(GdpMessage.F07_DB_ERROR, err, dataEdiz, ctx.idTestata, ctx.cartellaTestata));
         }
     }
