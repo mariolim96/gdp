@@ -265,3 +265,13 @@ Descrizione:
 L'analisi dello schema ER (Entity-Relationship) evidenzia che la relazione tra GDP_LOG e GDP_LOG_EDIZIONE è di tipo 1-a-N (uno-a-molti). In contesti di caricamento massivo (flussi storici), un singolo idLog può generare decine di record in GDP_LOG_EDIZIONE.
 Poiché la tabella GDP_CODA_CARICAMENTO punta a GDP_LOG_EDIZIONE (tramite FK_GDP_LOG_EDIZIONE), l'invio del solo idLog rende il sistema incapace di determinare quale specifica edizione debba essere portata in stato "READY".
 >>>>>>> Stashed changes
+
+domanda 30 
+Servizio: GdpDataUscitaService (F01)
+Problema: Estensioni logiche non documentate per i casi speciali 2WS0 e GnS0.
+Descrizione:
+Descrizione: Le specifiche ufficiali (V03) definiscono il parametro S0 solo nel Caso B per la configurazione 1WS0 (quotidiano). Non sono invece fornite indicazioni su come interpretare e gestire la presenza dello zero nei seguenti scenari riscontrati:
+
+Caso B (Pattern nWS0 con n > 1): Come deve essere calcolata la periodicità se l'intervallo settimanale è superiore a 1?
+
+Caso A (Pattern GnS0): Il parametro S0 è ammesso anche per la periodicità mensile? Se sì, quale logica di calcolo deve seguire?
