@@ -58,8 +58,8 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
 
     @Override
     @Transactional
-    public XmlCreationResponse creaXMLEdizione(Integer idTestata, Integer idLog, Integer idEdizione, Integer priorita) {
-        LOG.infof("Avvio F09 - DAMtrasmissione.creaXMLEdizione idEdizione %d", idEdizione);
+    public XmlCreationResponse creaXMLEdizione(Integer idTestata, Integer idLog, Integer idEdizione, Integer priorita,String pathEdizione) {
+        LOG.infof("Avvio F09 - DAMtrasmissione.creaXMLEdizione idEdizione %d,path %s\"", idEdizione,pathEdizione);
 
         XmlCreationResponse response = new XmlCreationResponse();
 
@@ -104,7 +104,7 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
             }
 
             // Update GDP_LOG_EDIZIONE
-            Optional<GdpLogEdizione> logEdOpt = logEdizioneRepository.find("fkGdpLog = ?1", idLog)
+            Optional<GdpLogEdizione> logEdOpt = logEdizioneRepository.find("fkGdpLog = ?1 and pathEdizione = ?2", idLog,pathEdizione)
                     .firstResultOptional();
             if (logEdOpt.isPresent()) {
                 GdpLogEdizione logEd = logEdOpt.get();
@@ -162,13 +162,12 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
         zos.closeEntry();
     }
 
-/*
+
     @Override
     public void inviaEdizioneAsync(Integer idLog, Integer idEdizione, String nomeFileCompresso) {
         LOG.infof("F10 - Richiesta invio asincrono ricevuta per Log: %d, Edizione: %d, File: %s",
                 idLog, idEdizione, nomeFileCompresso);
         // Qui in futuro potresti aggiungere l'annotazione @Asynchronous
     }
-    */
 
 }
