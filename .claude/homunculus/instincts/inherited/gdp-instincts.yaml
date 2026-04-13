@@ -1,0 +1,301 @@
+# Instincts generated from https://github.com/mariolim96/gdp
+# Generated: 2026-04-13T08:08:37.954Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: gdp-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/mariolim96/gdp
+---
+
+# Gdp Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat
+
+## Evidence
+
+- 1 commits analyzed
+- Detected conventional commit pattern
+- Examples: feat: implemented tests classes
+
+---
+id: gdp-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/mariolim96/gdp
+---
+
+# Gdp Commit Length
+
+## Action
+
+Keep commit messages concise (~31 characters)
+
+## Evidence
+
+- Average commit message length: 31 chars
+- Based on 1 commits
+
+---
+id: gdp-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/mariolim96/gdp
+---
+
+# Gdp Naming Files
+
+## Action
+
+Use PascalCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: PascalCase
+
+---
+id: gdp-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/mariolim96/gdp
+---
+
+# Gdp Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: gdp-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/mariolim96/gdp
+---
+
+# Gdp Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: gdp-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/mariolim96/gdp
+---
+
+# Gdp Test Naming
+
+## Action
+
+Name test files using the pattern: *.test.ts
+
+## Evidence
+
+- File pattern: *.test.ts
+- Consistent across test files
+
+---
+id: gdp-instinct-class-naming
+trigger: "When creating a new Java class file"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: mariolim96/gdp
+---
+
+# Gdp Instinct Class Naming
+
+## Action
+
+Name the file and class using PascalCase
+
+## Evidence
+
+- Pattern in namingConventions.files: PascalCase
+- Pattern in namingConventions.classes: PascalCase
+
+---
+id: gdp-instinct-function-naming
+trigger: "When defining a new function or method in Java"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: mariolim96/gdp
+---
+
+# Gdp Instinct Function Naming
+
+## Action
+
+Use camelCase for the function or method name
+
+## Evidence
+
+- Pattern in namingConventions.functions: camelCase
+
+---
+id: gdp-instinct-constant-naming
+trigger: "When declaring a constant in Java"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: mariolim96/gdp
+---
+
+# Gdp Instinct Constant Naming
+
+## Action
+
+Use SCREAMING_SNAKE_CASE for the constant name
+
+## Evidence
+
+- Pattern in namingConventions.constants: SCREAMING_SNAKE_CASE
+
+---
+id: gdp-instinct-import-style
+trigger: "When importing modules or classes in Java"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: mariolim96/gdp
+---
+
+# Gdp Instinct Import Style
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Pattern in importStyle: relative
+
+---
+id: gdp-instinct-export-style
+trigger: "When exporting modules or classes"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: mariolim96/gdp
+---
+
+# Gdp Instinct Export Style
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Pattern in exportStyle: named
+
+---
+id: gdp-instinct-test-file-pattern
+trigger: "When creating a new test file"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: mariolim96/gdp
+---
+
+# Gdp Instinct Test File Pattern
+
+## Action
+
+Name the file with the pattern *.test.ts
+
+## Evidence
+
+- Pattern in testing.filePattern: *.test.ts
+
+---
+id: gdp-instinct-test-type
+trigger: "When writing tests"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: mariolim96/gdp
+---
+
+# Gdp Instinct Test Type
+
+## Action
+
+Write unit tests
+
+## Evidence
+
+- Pattern in testing.testTypes: unit
+
+---
+id: gdp-instinct-test-location
+trigger: "When adding test files"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: mariolim96/gdp
+---
+
+# Gdp Instinct Test Location
+
+## Action
+
+Place test files in mixed locations (not strictly separated from source)
+
+## Evidence
+
+- Pattern in architecture.folderStructure.testLocation: mixed
+
+---
+id: gdp-instinct-commit-format
+trigger: "When making a commit"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: mariolim96/gdp
+---
+
+# Gdp Instinct Commit Format
+
+## Action
+
+Format the commit message using the conventional commit style with the 'feat' prefix for features
+
+## Evidence
+
+- Pattern in commits.type: conventional
+- Pattern in commits.prefixes: feat
+- Seen in commit: feat: implemented tests classes
+
