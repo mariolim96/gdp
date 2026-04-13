@@ -23,7 +23,6 @@ public class GdpTestataRepository implements PanacheRepositoryBase<GdpTestata, I
         return list("provincia", provincia);
     }
 
-<<<<<<< feat/f18
     public List<Object[]> findDateAttese(LocalDate dataInizio,
             LocalDate dataFine,
             Integer idTestata) {
@@ -76,13 +75,13 @@ public class GdpTestataRepository implements PanacheRepositoryBase<GdpTestata, I
                     .setParameter("dataFine", dataFine)
                     .getResultList();
         }
-=======
+    }
+
     public List<GdpTestata> findByInvioEdizione(Boolean invioEdizione) {
         return list("invioEdizione", invioEdizione);
     }
 
     public List<GdpTestata> findByCartella(String cartellaTestata) {
         return list("cartellaTestata", cartellaTestata);
->>>>>>> main
     }
 }
