@@ -364,82 +364,64 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           description: Conflict — maximum retry attempts exceeded (NRO_MAX_TENTATIVI=10)
-  /orch/acquisizioni/{idLog}/mail/prepara:
-    parameters:
-      - $ref: '#/components/parameters/idLog'
+  /orch/acquisizioni/mail/prepara: # URL senza parametri, tutto passa dal JSON
     post:
       tags:
         - orch-monitor
       operationId: orchPreparaMAIL
       summary: F14 — MONITOR.preparaMAIL
-      description: 'Compose email payload from GDP_MAIL template — does NOT send.
-
-        Reads recipient from GDP_UTENTESFTP.EMAIL via GDP_LOG.FK_GDP_UTENTEFTP.
-
-        Substitutes <[dataED]> and <[nomeTestata]> placeholders.
-
-        Called by gdpbff for POST /bo/acquisizioni/{idLog}/mail/prepara.'
+      description: 'Compone il payload della mail. Riceve idLog, idLogEdizione e tipoMail nel body JSON.'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
+              required: # Campi obbligatori nel JSON
+                - idLog
                 - tipoMail
+                - idLogEdizione
               properties:
+                idLog:
+                  type: integer
+                  format: int32
+                  description: "ID della spedizione generale (GDP_LOG)"
+                idLogEdizione:
+                  type: integer
+                  format: int32
+                  description: "ID specifico dell'edizione (opzionale per flussi storici)"
                 tipoMail:
                   type: string
-                  enum:
-                    - GW001
-                    - GE001
-                    - SW001
-                    - SE001
-                    - ST001
-                  description: 'COD_MAIL from GDP_MAIL table.
-
-                    GW001=Daily warning (edizione da integrare)
-
-                    GE001=Daily error (edizione non caricata)
-
-                    SW001=Historical warning
-
-                    SE001=Historical error
-
-                    ST001=Historical full delivery error'
+                  enum: [ GW001, GE001, SW001, SE001, ST001 ]
+                  description: "Codice del template della mail"
       responses:
         '200':
-          description: Mail payload composed
+          description: Mail payload composto correttamente
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MailComposition'
         '404':
           $ref: '#/components/responses/NotFound'
-  /orch/acquisizioni/{idLog}/mail/invia:
-    parameters:
-      - $ref: '#/components/parameters/idLog'
+  /orch/acquisizioni/mail/invia:
     post:
       tags:
         - orch-monitor
       operationId: orchInvioMAIL
       summary: F22 — MONITOR.invioMAIL
-      description: 'Send email using the payload from F14.
-
-        Operator may have edited oggetto and testo before this call.
-
-        Called by gdpbff for POST /bo/acquisizioni/{idLog}/mail/invia.'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MailComposition'
+              $ref: '#/components/schemas/MailSendRequest' # <--- Il nuovo DTO pulito
       responses:
         '200':
-          description: Mail sent successfully
-        '500':
-          description: Mail send failed
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericProcessResponse'
   /api/internal/acquisizioni/{idLog}/valida:
     parameters:
       - $ref: '#/components/parameters/idLog'
@@ -643,6 +625,31 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    MailSendRequest:
+      type: object
+      required:
+        - from
+        - to
+        - host
+        - porta
+        - oggetto
+        - testo
+      properties:
+        from:
+          type: string
+          format: email
+        to:
+          type: string
+          format: email
+        host:
+          type: string
+        porta:
+          type: integer
+          format: int32
+        oggetto:
+          type: string
+        testo:
+          type: string
     ErrorResponse:
       type: object
       required:
@@ -1059,6 +1066,7 @@ components:
     MailComposition:
       type: object
       required:
+        - Esito
         - from
         - to
         - host
@@ -1066,6 +1074,8 @@ components:
         - oggetto
         - testo
       properties:
+        Esito:
+          type: string
         from:
           type: string
           format: email
