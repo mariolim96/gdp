@@ -61,14 +61,16 @@ public class CheckConsegnaStoricoJob {
     private final SftpClientProducer sftpProducer;
     private final GdpTestataRepository gdpTestataRepository;
     private final AcquisizioneMapper acquisizioneMapper;
-
+    private final GdpCtrlEdizioniStoricheService ctrlEdizioniStoricheService;
     @Inject
     public CheckConsegnaStoricoJob(SftpClientProducer sftpProducer,
                                    GdpTestataRepository gdpTestataRepository,
-                                   AcquisizioneMapper acquisizioneMapper) {
+                                   AcquisizioneMapper acquisizioneMapper,
+                                   GdpCtrlEdizioniStoricheService ctrlEdizioniStoricheService) {
         this.sftpProducer = sftpProducer;
         this.gdpTestataRepository = gdpTestataRepository;
         this.acquisizioneMapper = acquisizioneMapper;
+        this.ctrlEdizioniStoricheService = ctrlEdizioniStoricheService;
     }
 
     // -------------------------------------------------------------------------
@@ -216,12 +218,18 @@ public class CheckConsegnaStoricoJob {
 
         Log.infof("Cartella [%s] (Log ID: %d, Testata ID: %d) dell'utente [%s] smistata correttamente in TMP.", cartella, idLog, testata.id, utente);
 
-        // TODO F07: Invocazione asincrona del servizio di controllo edizioni storiche.
+        //  Invocazione asincrona del servizio di controllo edizioni storiche.
         // Il servizio (da implementare in branch/f07) riceverà:
         // - idLog: l'ID del log appena creato
         // - idTestata: l'ID della testata individuata
         // - cartella: il nome della cartella SFTP
         // - dataConsegna: la data ricavata da nomeConsegna (CONS_yyyy-mm-dd)
+        ctrlEdizioniStoricheService.ctrlEdizioniStoriche(
+                testata.id,
+                FileUtils.sanitizePathComponent(cartella),
+                consegna,
+                idLog
+        );
     }
 
     // -------------------------------------------------------------------------

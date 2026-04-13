@@ -7,7 +7,7 @@ import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import it.csipiemonte.gdp.gdporch.model.enums.TipoAcquisizione;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.TypedQuery;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @ApplicationScoped
@@ -24,8 +24,8 @@ public class GdpLogRepository implements PanacheRepositoryBase<GdpLog, Integer> 
     public List<AcquisizioneRicercaProjection> searchAcquisizioni(
             TipoAcquisizione tipoAcquisizione,
             Integer idTestata,
-            LocalDateTime dataDa,
-            LocalDateTime dataAExclusive,
+            LocalDate dataDa,
+            LocalDate dataAExclusive,
             TipoEdizione tipoEdizione) {
         TypedQuery<AcquisizioneRicercaProjection> query = getEntityManager().createQuery(
                 "select new it.csipiemonte.gdp.gdporch.model.projection.AcquisizioneRicercaProjection(" +
@@ -49,5 +49,10 @@ public class GdpLogRepository implements PanacheRepositoryBase<GdpLog, Integer> 
         query.setParameter("dataAExclusive", dataAExclusive);
         query.setParameter("tipoEdizione", tipoEdizione);
         return query.getResultList();
+    }
+
+    public List<GdpLog> findByTipoAcquisizioneAndDataAcquisizione(TipoAcquisizione tipoAcquisizione,
+            LocalDate dataAcquisizione) {
+        return list("tipoAcquisizione = ?1 and date(dataAcquisizione) = ?2", tipoAcquisizione, dataAcquisizione);
     }
 }

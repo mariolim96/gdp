@@ -1504,7 +1504,19 @@ components:
           type: string
         cancellazione:
           type: string
-        codToma:
+        dataStato:
+          type: string
+          format: date
+        codTema:
+          type: string
+        tema:
+          type: string
+        descrizione:
+          type: string
+        mail:
+          type: string
+          format: email
+        cap:
           type: string
         codEditrice:
           type: string

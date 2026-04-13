@@ -7,8 +7,9 @@ import jakarta.ws.rs.ext.Provider;
 import org.jboss.logging.Logger;
 
 /**
- * Global Exception Handier for the GdP application.
- * catches GdpException and converts it to a GenericProcessResponse with code and message.
+ * Global Exception Handler for the GdP application.
+ * Catches GdpException and converts it to a GenericProcessResponse with code and message,
+ * respecting the HTTP status defined in the exception.
  */
 @Provider
 public class GdpExceptionHandler implements ExceptionMapper<GdpException> {
@@ -17,14 +18,16 @@ public class GdpExceptionHandler implements ExceptionMapper<GdpException> {
 
     @Override
     public Response toResponse(GdpException exception) {
-        LOG.warnf("Caught GdpException [code=%s]: %s", exception.getCodice(), exception.getMessage());
+        LOG.warnf("Caught GdpException [code=%s, status=%s]: %s", 
+                exception.getCodice(), exception.getStatus(), exception.getMessage());
 
         GenericProcessResponse errorResponse = new GenericProcessResponse();
         errorResponse.setCodice(exception.getCodice());
         errorResponse.setMessaggio(exception.getMessage());
 
-        return Response.status(Response.Status.BAD_REQUEST)
+        return Response.status(exception.getStatus())
                 .entity(errorResponse)
                 .build();
     }
 }
+
