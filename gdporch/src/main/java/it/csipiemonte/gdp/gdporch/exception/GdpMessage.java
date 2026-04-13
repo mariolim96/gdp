@@ -31,7 +31,7 @@ public enum GdpMessage {
     F04_DB_ERROR(Codes.MSG00002, "<E003> Anomalia EDIZIONE — DB insert failed"),
     F04_DAM_ERROR(Codes.MSG00003, "<E004> Anomalia EDIZIONE — DAM package creation failed"),
 
-    // F05 - sospensioneEdizioneAttesa / F18 - verifDateAttese / F15 - ricerca
+    // F05 - sospensioneEdizioneAttesa / F18 - verifDateAttese
     F05_NO_RESULTS(Codes.MSG00001, "Nessun risultato trovato per i parametri inseriti"),
 
     // F16 - DB.getElencoTestate
@@ -78,6 +78,14 @@ public enum GdpMessage {
     // F14 - preparaMAIL / F22 - invioMAIL
     F14_MAIL_NOT_FOUND(Codes.MSG00001, "Email address not found"),
     F22_MAIL_SEND_FAILED(Codes.MSG00001, "Mail send failed"),
+
+    // F15 - ricercaAcquisizioni
+    F15_ID_TESTATA_REQUIRED(Codes.MSG00002, "Il parametro idTestata è obbligatorio"),
+    F15_DATA_A_REQUIRED(Codes.MSG00002, "Il parametro dataA è obbligatorio"),
+    F15_TIPO_EDIZIONE_REQUIRED(Codes.MSG00002, "Il parametro tipoEdizione è obbligatorio"),
+    F15_INVALID_DATE_RANGE(Codes.MSG00002, "Il parametro dataDA non può essere successivo a dataA"),
+    F15_INVALID_TIPO_ACQUISIZIONE(Codes.MSG00002, "Il parametro tipoAcquisizione deve valere G oppure S"),
+    F15_NO_RESULTS(Codes.MSG00001, "Nessun dato trovato"),
 
     // F20 - statoDAM
     F20_DATO_NON_TROVATO(Codes.MSG00001, "Dato non trovato"),
