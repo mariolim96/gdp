@@ -16,7 +16,6 @@ import it.csipiemonte.gdp.gdporch.model.projection.AcquisizioneRicercaProjection
 import it.csipiemonte.gdp.gdporch.model.repository.GdpLogRepository;
 import it.csipiemonte.gdp.gdporch.service.impl.GdpMonitorAcquisizioniServiceImpl;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -51,7 +50,7 @@ class GdpMonitorAcquisizioniServiceTest {
                 "Gazzetta Test",
                 it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione.OK,
                 LocalDate.of(2026, 4, 12),
-                LocalDateTime.of(2026, 4, 12, 9, 45),
+                LocalDate.of(2026, 4, 12),
                 12,
                 11);
         AcquisizioneRicercaSummary dto = new AcquisizioneRicercaSummary()
@@ -60,16 +59,16 @@ class GdpMonitorAcquisizioniServiceTest {
                 .nomeTestata("Gazzetta Test")
                 .tipoEdizione(TipoEdizione.OK)
                 .dataEdizione(LocalDate.of(2026, 4, 12))
-                .dataAcquisizione(Date.from(LocalDateTime.of(2026, 4, 12, 9, 45)
-                        .atZone(java.time.ZoneId.systemDefault()).toInstant()))
+                .dataAcquisizione(Date.from(LocalDate.of(2026, 4, 12)
+                        .atStartOfDay(java.time.ZoneId.systemDefault()).toInstant()))
                 .nroTotFileAcq(12)
                 .nroTotFileVal(11);
 
         when(logRepository.searchAcquisizioni(
                 eq(it.csipiemonte.gdp.gdporch.model.enums.TipoAcquisizione.G),
                 eq(22),
-                eq(dataDa.atStartOfDay()),
-                eq(dataA.plusDays(1).atStartOfDay()),
+                eq(dataDa),
+                eq(dataA),
                 eq(it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione.OK)))
                 .thenReturn(List.of(projection));
         when(acquisizioneRicercaMapper.toDto(projection)).thenReturn(dto);
@@ -82,8 +81,8 @@ class GdpMonitorAcquisizioniServiceTest {
         verify(logRepository).searchAcquisizioni(
                 eq(it.csipiemonte.gdp.gdporch.model.enums.TipoAcquisizione.G),
                 eq(22),
-                eq(dataDa.atStartOfDay()),
-                eq(dataA.plusDays(1).atStartOfDay()),
+                eq(dataDa),
+                eq(dataA),
                 eq(it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione.OK));
     }
 
@@ -93,8 +92,8 @@ class GdpMonitorAcquisizioniServiceTest {
         when(logRepository.searchAcquisizioni(
                 eq(it.csipiemonte.gdp.gdporch.model.enums.TipoAcquisizione.S),
                 eq(99),
-                eq(LocalDate.of(1900, 1, 1).atStartOfDay()),
-                eq(dataA.plusDays(1).atStartOfDay()),
+                eq(LocalDate.of(1900, 1, 1)),
+                eq(dataA),
                 eq(it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione.ST)))
                 .thenReturn(Collections.emptyList());
 

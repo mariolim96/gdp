@@ -12,7 +12,6 @@ import it.csipiemonte.gdp.gdporch.service.GdpMonitorAcquisizioniService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @ApplicationScoped
@@ -61,14 +60,11 @@ public class GdpMonitorAcquisizioniServiceImpl implements GdpMonitorAcquisizioni
             throw new GdpException(GdpMessage.F15_INVALID_TIPO_ACQUISIZIONE);
         }
 
-        LocalDateTime startDateTime = effectiveStartDate.atStartOfDay();
-        LocalDateTime endDateTimeExclusive = dataA.plusDays(1).atStartOfDay();
-
         List<AcquisizioneRicercaProjection> projections = logRepository.searchAcquisizioni(
                 acquisitionType,
                 idTestata,
-                startDateTime,
-                endDateTimeExclusive,
+                effectiveStartDate,
+                dataA,
                 it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione.fromValue(tipoEdizione.toString()));
 
         if (projections.isEmpty()) {

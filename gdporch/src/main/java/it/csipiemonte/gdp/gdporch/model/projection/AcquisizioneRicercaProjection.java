@@ -2,7 +2,6 @@ package it.csipiemonte.gdp.gdporch.model.projection;
 
 import it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 public record AcquisizioneRicercaProjection(
         Integer idLog,
@@ -10,7 +9,7 @@ public record AcquisizioneRicercaProjection(
         String nomeTestata,
         TipoEdizione tipoEdizione,
         LocalDate dataEdizione,
-        LocalDateTime dataAcquisizione,
+        LocalDate dataAcquisizione,
         Integer nroTotFileAcq,
         Integer nroTotFileVal) {
 }

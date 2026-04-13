@@ -15,11 +15,11 @@ public interface AcquisizioneRicercaMapper {
     @Mapping(target = "tipoEdizione", expression = "java(toDtoTipoEdizione(projection.tipoEdizione()))")
     AcquisizioneRicercaSummary toDto(AcquisizioneRicercaProjection projection);
 
-    default Date toDate(java.time.LocalDateTime value) {
+    default Date toDate(java.time.LocalDate value) {
         if (value == null) {
             return null;
         }
-        return Date.from(value.atZone(ZoneId.systemDefault()).toInstant());
+        return Date.from(value.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     default TipoEdizione toDtoTipoEdizione(it.csipiemonte.gdp.gdporch.model.enums.TipoEdizione value) {

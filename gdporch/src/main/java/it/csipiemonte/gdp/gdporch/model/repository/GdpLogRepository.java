@@ -30,15 +30,16 @@ public class GdpLogRepository implements PanacheRepositoryBase<GdpLog, Integer> 
         TypedQuery<AcquisizioneRicercaProjection> query = getEntityManager().createQuery(
                 "select new it.csipiemonte.gdp.gdporch.model.projection.AcquisizioneRicercaProjection(" +
                         "log.id, testata.id, testata.nomeTestata, logEdizione.tipoEdizione, edizione.dataEdizione, " +
-                        "log.dataAcquisizione, logEdizione.nroPagAcquisite, logEdizione.nroPagValide) " +
+                        "cast(log.dataAcquisizione as LocalDate), logEdizione.nroPagAcquisite, logEdizione.nroPagValide) "
+                        +
                         "from GdpLog log " +
                         "join GdpLogEdizione logEdizione on logEdizione.fkGdpLog = log.id " +
                         "join GdpTestata testata on testata.id = log.fkGdpTestata " +
                         "join GdpEdizione edizione on edizione.id = logEdizione.fkGdpEdizione " +
                         "where log.tipoAcquisizione = :tipoAcquisizione " +
                         "and log.fkGdpTestata = :idTestata " +
-                        "and log.dataAcquisizione >= :dataDa " +
-                        "and log.dataAcquisizione < :dataAExclusive " +
+                        "and cast(log.dataAcquisizione as LocalDate) >= :dataDa " +
+                        "and cast(log.dataAcquisizione as LocalDate) <= :dataAExclusive " +
                         "and logEdizione.tipoEdizione = :tipoEdizione " +
                         "order by log.dataAcquisizione desc, edizione.dataEdizione desc, log.id desc",
                 AcquisizioneRicercaProjection.class);
