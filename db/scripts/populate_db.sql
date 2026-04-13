@@ -206,3 +206,37 @@ SELECT setval('seq_gdp_tema', (SELECT COALESCE(max(COD_TEMA), 1) FROM GDP_TEMA))
 SELECT setval('seq_gdp_testata', (SELECT COALESCE(max(ID_GDP_TESTATA), 1) FROM GDP_TESTATA));
 SELECT setval('seq_gdp_utentesftp', (SELECT COALESCE(max(ID_GDP_UTENTESFTP), 1) FROM GDP_UTENTESFTP));
 SELECT setval('seq_gdp_utenteweb', (SELECT COALESCE(max(ID_GDP_UTENTEWEB), 1) FROM GDP_UTENTEWEB));
+
+-- -----------------------------------------------------------------
+-- 19. GDPORCH Test Data, base for the unit and integration tests
+-- -----------------------------------------------------------------
+
+-- Testata: La Sentinella del Canavese (ID 201)
+INSERT INTO GDP_TESTATA (ID_GDP_TESTATA, NOME_TESTATA, CARTELLA_TESTATA, INVIO_EDIZIONE, STATO, COD_TEMA, PROVINCIA, DESCRIZIONE)
+VALUES (201, 'La Sentinella del Canavese', 'sentinella', true, 0, 1, 'TO', 'Testata per integrazione gdporch');
+
+-- Periodicità settimanale (ogni mercoledì)
+INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_PERIODICITA)
+VALUES (201, 201, 0, '1WS3');
+
+-- Testata: Il Messaggero (ID 202)
+INSERT INTO GDP_TESTATA (ID_GDP_TESTATA, NOME_TESTATA, CARTELLA_TESTATA, INVIO_EDIZIONE, STATO, COD_TEMA, PROVINCIA, DESCRIZIONE)
+VALUES (202, 'Il Messaggero', 'messaggero', true, 0, 1, 'TO', 'Testata per integrazione gdporch (mensile)');
+
+-- Periodicità mensile (1° del mese)
+INSERT INTO GDP_PERIODICITA (ID_GDP_PERIODICITA, FK_GDP_TESTATA, MENSILITA, GG_PERIODICITA)
+VALUES (202, 202, 1, 'G01');
+
+-- Utente SFTP per testata 201
+INSERT INTO GDP_UTENTESFTP (ID_GDP_UTENTESFTP, USERNAME, PASSWORD, HOME_SFTP, RIF_TESTATA, STATO, EMAIL)
+VALUES (201, 'editore_sentinella', 'pw', '/flusso_regolare/sentinella', '201', 'ATTIVO', 'ed@sentinella.it');
+
+-- Log di test
+INSERT INTO GDP_LOG (ID_GDP_LOG, FK_GDP_UTENTEFTP, FK_GDP_TESTATA, TIPO_ACQUISIZIONE, DT_ACQUISIZIONE, TOTALE_FILE_ACQUISITI)
+VALUES (1100, 201, 201, 'G', CURRENT_DATE, 0);
+
+-- Sync sequences for the new IDs
+SELECT setval('seq_gdp_testata', (SELECT max(ID_GDP_TESTATA) FROM GDP_TESTATA));
+SELECT setval('seq_gdp_periodicita', (SELECT max(ID_GDP_PERIODICITA) FROM GDP_PERIODICITA));
+SELECT setval('seq_gdp_utentesftp', (SELECT max(ID_GDP_UTENTESFTP) FROM GDP_UTENTESFTP));
+SELECT setval('seq_gdp_log', (SELECT max(ID_GDP_LOG) FROM GDP_LOG));

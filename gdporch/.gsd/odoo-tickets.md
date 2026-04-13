@@ -155,3 +155,63 @@ _Focus: Deployment and monitoring readiness._
 **Type**: Independent
 **Description**: Document and write `docker-compose.yml` and K8s ConfigMaps validating Quarkus configurations.
 **Estimate**: 8h
+
+---
+
+## EPIC 7: Quality Assurance & Automated Testing (Phase 8)
+
+
+### Ticket: Implement Shared Test Infrastructure & Mocking Suite
+
+**Type**: Independent
+**Description**: Set up the core test environment including Testcontainers for PostgreSQL, WireMock for DAM LIBRA API, and the Testcontainers `atmoz/sftp` Docker container for SFTP mocking. Implement `TestPdfFactory` for generating valid/corrupt PDF/A files for validation testing.
+**Estimate**: 12h
+
+### Ticket: Implement Unit Test Suite for Core Algorithms (L1)
+
+**Type**: Independent
+**Description**: Implement pure unit tests (L1) without external dependencies for core algorithms. Focus on date calculation logic (F01 configDTEdizioneAttesa), naming convention checks, regex validations, and basic data transformations.
+**Estimate**: 16h
+
+### Ticket: Implement Integration Test Suite for Periodic Flow (L2)
+
+**Type**: Dependent
+**Depends On**: EPIC 1, EPIC 2, EPIC 4, EPIC 7 (Shared Infra)
+**Description**: Implement integration tests for the primary periodic pipeline (F01-F04, F08-F10). Cover nominal scenarios, date heuristics, multipage splits, and DAM upload queueing as defined in the testbook.
+**Estimate**: 24h
+
+### Ticket: Implement Integration Test Suite for Historical Flow (L2)
+
+**Type**: Dependent
+**Depends On**: EPIC 3, EPIC 7 (Shared Infra)
+**Description**: Implement integration tests for the historical delivery process (F06, F07). Verify directory traversal, metadata extraction from structured folders, and priority handling for historical vs periodic editions.
+**Estimate**: 12h
+
+### Ticket: Implement Integration Test Suite for Monitoring & Management APIs (L2)
+
+**Type**: Dependent
+**Depends On**: EPIC 5, EPIC 7 (Shared Infra)
+**Description**: Implement integration tests for REST APIs (F12-F15, F16-F17, F18, F19, F20-F22) using RestAssured. Verify status lookups, queue reactivation (F21), date suspensions (F05), and mail assembly (F14/F22).
+**Estimate**: 16h
+
+### Ticket: Implement Orchestration and Scheduling Tests (L2)
+
+**Type**: Dependent
+**Depends On**: EPIC 7 (Shared Infra)
+**Description**: Implement integration tests for Quartz schedulers (TB-SCHEDULING) and workflow orchestration (TB-ORCHESTRATORE, TB-MONITOR-WORKFLOW). Verify execution sequences, state propagation across components, and scheduler firing metrics.
+**Estimate**: 16h
+
+### Ticket: Implement End-to-End (E2E) Regression Suite (L3)
+
+**Type**: Dependent
+**Depends On**: EPIC 7 (Shared Infra)
+**Description**: Implement the L3 E2E tests for the full data lifecycle: from SFTP deposit to DAM submission. Cover nominal paths for both Periodic and Historical flows, ensuring cross-component state consistency.
+**Estimate**: 16h
+
+### Ticket: Implement Resilience, Concurrency & Observability Tests
+
+**Type**: Dependent
+**Depends On**: EPIC 6 (Observability)
+**Description**: Implement tests for critical edge cases: race conditions during polling (TB-CONCORRENZA), circuit breaker behavior (SFTP/DAM downtime), recovery after crash (TB-RESILIENZA), and health/metrics endpoint accuracy (TB-OSSERVABILITA).
+**Estimate**: 14h
+

@@ -3,9 +3,11 @@ package it.csipiemonte.gdp.gdporch.controller;
 import it.csipiemonte.gdp.gdporch.api.ApiApi;
 import it.csipiemonte.gdp.gdporch.dto.EdizioneInsertResponse;
 import it.csipiemonte.gdp.gdporch.dto.GenericProcessResponse;
+import it.csipiemonte.gdp.gdporch.dto.XmlCreationRequest;
 import it.csipiemonte.gdp.gdporch.dto.XmlCreationResponse;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpEdizione;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpLogEdizione;
+import it.csipiemonte.gdp.gdporch.model.repository.GdpEdizioneRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpLogEdizioneRepository;
 import it.csipiemonte.gdp.gdporch.service.DamTrasmissioneService;
 import it.csipiemonte.gdp.gdporch.service.GdpCtrlEdizioneAcquisitaService;
@@ -21,16 +23,20 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
     private final GdpEdizioneService edizioneService;
     private final DamTrasmissioneService trasmissionService;
     private final GdpLogEdizioneRepository  gdpLogEdizioneRepository;
+    private final GdpEdizioneRepository edizioneRepository;
+
     @Inject
     public GdpCtrlEdizioneAcquisitaResource(
             GdpCtrlEdizioneAcquisitaService ctrlEdizioneAcquisitaService,
             GdpEdizioneService edizioneService,
             DamTrasmissioneService trasmissionService,
-            GdpLogEdizioneRepository gdpLogEdizioneRepository) {
+            GdpLogEdizioneRepository gdpLogEdizioneRepository,
+            GdpEdizioneRepository edizioneRepository) {
         this.ctrlEdizioneAcquisitaService = ctrlEdizioneAcquisitaService;
         this.edizioneService = edizioneService;
         this.trasmissionService = trasmissionService;
         this.gdpLogEdizioneRepository = gdpLogEdizioneRepository;
+        this.edizioneRepository = edizioneRepository;
     }
 
     @Override
@@ -49,12 +55,17 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
     }
 
     @Override
-    public Response orchInternalCreaXML(Integer idLog, Integer priorita, Integer idTestata,
-            Integer idEdizione) {
-        Optional<GdpLogEdizione> logEd = gdpLogEdizioneRepository.find("fkGdpLog = ?1 and fkGdpEdizione = ?2",idLog,idEdizione).stream().findFirst();
-        String pathRecuperato = logEd.map(le -> le.pathEdizione).orElse("");
-        //Chiamata F09 con firma nuova
-        XmlCreationResponse result = trasmissionService.creaXMLEdizione(idTestata, idLog, idEdizione, priorita,pathRecuperato);
+    public Response orchInternalCreaXML(XmlCreationRequest req) {
+        // Find idEdizione from testata and date as it's missing from the request body in OpenAPI spec
+        var edizione = edizioneRepository.findByTestataAndData(req.getIdTestata(), req.getDataEdizione())
+                .orElseThrow(() -> new jakarta.ws.rs.WebApplicationException("Edizione non trovata", 404));
+
+        XmlCreationResponse result = trasmissionService.creaXMLEdizione(
+                req.getIdTestata(), 
+                req.getIdLog(), 
+                edizione.id, 
+                req.getPriorita().value()
+        );
         return Response.ok(result).build();
     }
 }
