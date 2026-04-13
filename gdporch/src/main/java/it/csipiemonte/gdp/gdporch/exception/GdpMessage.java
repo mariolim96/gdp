@@ -10,7 +10,7 @@ public enum GdpMessage {
     F_ERROR(Codes.MSG00001, "Errore generico di elaborazione"),
     F_IO_ERROR(Codes.MSG00002, "Errore di Input/Output durante l'elaborazione"),
     F_NOT_FOUND(Codes.MSG00002, "Entita non trovata"),
-    
+
     // F01 - configDTEdizioneAttesa
     F01_NO_OCCURRENCES(Codes.MSG00001, "Nessuna occorrenza trovata per i parametri inseriti"),
     F01_NO_MENSILITA(Codes.MSG00002, "Testata attiva senza MENSILITA definita"),
@@ -31,7 +31,7 @@ public enum GdpMessage {
     F04_DB_ERROR(Codes.MSG00002, "<E003> Anomalia EDIZIONE — DB insert failed"),
     F04_DAM_ERROR(Codes.MSG00003, "<E004> Anomalia EDIZIONE — DAM package creation failed"),
 
-    // F05 - sospensioneEdizioneAttesa / F18 - verifDateAttese / F15 - ricerca
+    // F05 - sospensioneEdizioneAttesa / F18 - verifDateAttese
     F05_NO_RESULTS(Codes.MSG00001, "Nessun risultato trovato per i parametri inseriti"),
 
     // F06 - checkConsegnaStorico
@@ -45,7 +45,7 @@ public enum GdpMessage {
     F07_FORMAT_ERROR(Codes.MSG00002, "Edition moved (format error)"),
     F07_DB_ERROR(Codes.MSG00003, "<E104> DB insert failed (F08 error)"),
     F07_DAM_ERROR(Codes.MSG00004, "<E105> DAM package failed (F09 error)"),
-    
+
     // F08 - insEdizione
     F08_INSERT_EDIZIONE_FAILED(Codes.MSG00001, "Error inserting GDP_EDIZIONE"),
     F08_INSERT_PAGINA_FAILED(Codes.MSG00002, "Error inserting GDP_PAGINA"),
@@ -65,12 +65,20 @@ public enum GdpMessage {
     F14_MAIL_NOT_FOUND(Codes.MSG00001, "Email address not found"),
     F22_MAIL_SEND_FAILED(Codes.MSG00001, "Mail send failed"),
 
+    // F15 - ricercaAcquisizioni
+    F15_ID_TESTATA_REQUIRED(Codes.MSG00002, "Il parametro idTestata è obbligatorio"),
+    F15_DATA_A_REQUIRED(Codes.MSG00002, "Il parametro dataA è obbligatorio"),
+    F15_TIPO_EDIZIONE_REQUIRED(Codes.MSG00002, "Il parametro tipoEdizione è obbligatorio"),
+    F15_INVALID_DATE_RANGE(Codes.MSG00002, "Il parametro dataDA non può essere successivo a dataA"),
+    F15_INVALID_TIPO_ACQUISIZIONE(Codes.MSG00002, "Il parametro tipoAcquisizione deve valere G oppure S"),
+    F15_NO_RESULTS(Codes.MSG00001, "Nessun dato trovato"),
+
     // F20 - statoDAM
     F20_DATO_NON_TROVATO(Codes.MSG00001, "Dato non trovato"),
 
     // F21 - attivaCODA
     F21_MAX_RETRIES(Codes.MSG00001, "ATTENZIONE! Superato il numero massimo di tentativi ammessi");
-    
+
     public static class Codes {
         public static final String MSG00001 = "MSG00001";
         public static final String MSG00002 = "MSG00002";
