@@ -180,6 +180,119 @@ class GdpMonitorServiceImplTest {
     }
 
     @Test
+    void dettaglioAcquisizioneRestituisceTuttiICampiPrincipali() {
+        // Obiettivo (TB-F13-I01):
+        // - verificare che la response F13 contenga i campi previsti dalla specifica
+        // popolati con dati coerenti.
+        // Dipendenze usate:
+        // - logRepository.findById
+        // - logEdizioneRepository.findByLog
+        // - testataRepository.findById
+        // - edizioneRepository.findById
+        GdpLog log = new GdpLog();
+        log.id = 300;
+        log.fkGdpUtenteFtp = 77;
+        log.fkGdpTestata = 10;
+        log.tipoAcquisizione = TipoAcquisizione.S;
+        log.dataAcquisizione = LocalDateTime.of(2026, 4, 14, 11, 30);
+        log.totaleFileAcquisiti = 8;
+        log.esito = "MSG00009";
+
+        GdpLogEdizione logEdizione = new GdpLogEdizione();
+        logEdizione.id = 301;
+        logEdizione.fkGdpLog = 300;
+        logEdizione.fkGdpEdizione = 400;
+        logEdizione.tipoEdizione = TipoEdizione.ST;
+        logEdizione.primaPagina = Boolean.TRUE;
+        logEdizione.fileXml = Boolean.TRUE;
+        logEdizione.fileZip = Boolean.FALSE;
+        logEdizione.nroPagAcquisite = 8;
+        logEdizione.nroPagValide = 7;
+        logEdizione.nroPagErrate = 1;
+        logEdizione.jobId = "job-300";
+        logEdizione.descrizione = "Dettaglio completo";
+
+        GdpTestata testata = new GdpTestata();
+        testata.id = 10;
+        testata.nomeTestata = "Testata Completa";
+
+        GdpEdizione edizione = new GdpEdizione();
+        edizione.id = 400;
+        edizione.dataEdizione = LocalDate.of(2026, 4, 13);
+
+        when(logRepository.findById(300)).thenReturn(log);
+        when(logEdizioneRepository.findByLog(300)).thenReturn(List.of(logEdizione));
+        when(testataRepository.findById(10)).thenReturn(testata);
+        when(edizioneRepository.findById(400)).thenReturn(edizione);
+
+        AcquisizioneDetail result = service.dettaglioAcquisizione(300);
+
+        assertEquals(300, result.getIdLog());
+        assertEquals(10, result.getIdTestata());
+        assertEquals("Testata Completa", result.getNomeTestata());
+        assertEquals(LocalDate.of(2026, 4, 13), result.getDataEdizione());
+        assertEquals("Edizione storica", result.getTipoEdizione());
+        assertEquals(AcquisizioneDetail.TipoAcquisizioneEnum.S, result.getTipoAcquisizione());
+        assertEquals(
+                java.util.Date.from(log.dataAcquisizione.atZone(ZoneId.systemDefault()).toInstant()),
+                result.getDataAcquisizione());
+        assertEquals(8, result.getNroTotFile());
+        assertEquals("MSG00009", result.getEsito());
+        assertEquals(400, result.getIdEdizione());
+        assertEquals(true, result.getPrimaPagina());
+        assertEquals(true, result.getFileXML());
+        assertEquals(false, result.getFileZIP());
+        assertEquals(8, result.getNroPagAcq());
+        assertEquals(7, result.getNroPagOK());
+        assertEquals(1, result.getNroPagErrate());
+        assertEquals("job-300", result.getJobId());
+        assertEquals("Dettaglio completo", result.getDescrizione());
+    }
+
+    @Test
+    void dettaglioAcquisizioneDecodificaTipoEdizioneDescrittiva() {
+        // Obiettivo (TB-F13-I02):
+        // - verificare che tipoEdizione sia restituito come descrizione umana e non
+        // come codice tecnico (es. AN).
+        // Dipendenze usate:
+        // - logRepository.findById
+        // - logEdizioneRepository.findByLog
+        // - testataRepository.findById
+        // - edizioneRepository.findById
+        GdpLog log = new GdpLog();
+        log.id = 401;
+        log.fkGdpTestata = 11;
+        log.tipoAcquisizione = TipoAcquisizione.G;
+        log.dataAcquisizione = LocalDateTime.of(2026, 4, 14, 9, 0);
+        log.totaleFileAcquisiti = 2;
+        log.esito = "MSG00009";
+
+        GdpLogEdizione logEdizione = new GdpLogEdizione();
+        logEdizione.id = 402;
+        logEdizione.fkGdpLog = 401;
+        logEdizione.fkGdpEdizione = 501;
+        logEdizione.tipoEdizione = TipoEdizione.AN;
+
+        GdpTestata testata = new GdpTestata();
+        testata.id = 11;
+        testata.nomeTestata = "Testata AN";
+
+        GdpEdizione edizione = new GdpEdizione();
+        edizione.id = 501;
+        edizione.dataEdizione = LocalDate.of(2026, 4, 14);
+
+        when(logRepository.findById(401)).thenReturn(log);
+        when(logEdizioneRepository.findByLog(401)).thenReturn(List.of(logEdizione));
+        when(testataRepository.findById(11)).thenReturn(testata);
+        when(edizioneRepository.findById(501)).thenReturn(edizione);
+
+        AcquisizioneDetail result = service.dettaglioAcquisizione(401);
+
+        assertEquals("Anticipataria", result.getTipoEdizione());
+        assertEquals(it.csipiemonte.gdp.gdporch.dto.TipoEdizione.AN, result.getTipoEdizioneCode());
+    }
+
+    @Test
     void dettaglioAcquisizioneUsaLogEdizioneConFkEdizioneValorizzata() {
         // Obiettivo (F13):
         // - scegliere una log-edizione con fkGdpEdizione valorizzato anche se la prima
