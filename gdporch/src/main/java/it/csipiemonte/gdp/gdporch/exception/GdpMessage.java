@@ -10,7 +10,7 @@ public enum GdpMessage {
     F_ERROR(Codes.MSG00001, "Errore generico di elaborazione"),
     F_IO_ERROR(Codes.MSG00002, "Errore di Input/Output durante l'elaborazione"),
     F_NOT_FOUND(Codes.MSG00002, "Entita non trovata"),
-    
+
     // F01 - configDTEdizioneAttesa
     F01_NO_OCCURRENCES(Codes.MSG00001, "Nessuna occorrenza trovata per i parametri inseriti"),
     F01_NO_MENSILITA(Codes.MSG00002, "Testata attiva senza MENSILITA definita"),
@@ -34,6 +34,14 @@ public enum GdpMessage {
     // F05 - sospensioneEdizioneAttesa / F18 - verifDateAttese / F15 - ricerca
     F05_NO_RESULTS(Codes.MSG00001, "Nessun risultato trovato per i parametri inseriti"),
 
+    // F16 - DB.getElencoTestate
+    F16_OK(Codes.MSG00009, "OK"),
+    F16_INVALID_FILTERS(Codes.MSG00001, "Solo un filtro alla volta è consentito"),
+
+    // F17 - DB.getTestata
+    F17_OK(Codes.MSG00009, "OK"),
+    F17_NOT_FOUND(Codes.MSG00002, "Testata non trovata"),
+
     // F06 - checkConsegnaStorico
     F06_OK(Codes.MSG00009, "OK"),
     F06_NO_HISTORICAL(Codes.MSG00001, "Nessuna nuova consegna storica trovata"),
@@ -41,18 +49,24 @@ public enum GdpMessage {
     F06_TESTATA_NOT_FOUND(Codes.MSG00003, "<E102> Anomalia ESISTENZA — testata ID not found"),
 
     // F07 - ctrlEdizioniStoriche
-    F07_WRONG_DATE_FORMAT(Codes.MSG00001, "<E103> Edition with wrong date format"),
-    F07_FORMAT_ERROR(Codes.MSG00002, "Edition moved (format error)"),
-    F07_DB_ERROR(Codes.MSG00003, "<E104> DB insert failed (F08 error)"),
-    F07_DAM_ERROR(Codes.MSG00004, "<E105> DAM package failed (F09 error)"),
-    
+    F07_OK(Codes.MSG00009,
+            "<MSG>Elaborazione completata per la Testata %d - %s<MSG>\n\nEdizioni esaminate %d\n%d file PDF di cui %d scartati\n%d file TXT di cui %d scartati\n%d file TIF di cui %d scartati"),
+    F07_WRONG_DATE_FORMAT(Codes.MSG00001,
+            "<E103>%d - Edizione %s con formato errato <E103>\nspostata in %s/CONS_%s/%s/%s"),
+    F07_MOVE_ERRATA(Codes.MSG00002, "Edizione %d spostata in %s/CONS_%s/%s/%s"),
+    F07_DB_ERROR(Codes.MSG00003,
+            "<E104>Anomalia EDIZIONE - [%s]<E104>\nNon è stato possibile inserire sul DB l’edizione %s della testata %d - %s"),
+    F07_DAM_ERROR(Codes.MSG00004,
+            "<E105>Anomalia EDIZIONE - [%s]<E105>\nSi è verificato un errore nella creazione del file per la trasmissione al DAM dell’edizione %s della testata %d - %s"),
+
     // F08 - insEdizione
     F08_INSERT_EDIZIONE_FAILED(Codes.MSG00001, "Error inserting GDP_EDIZIONE"),
     F08_INSERT_PAGINA_FAILED(Codes.MSG00002, "Error inserting GDP_PAGINA"),
 
     // F09 - creaXMLEdizione
-    F09_XML_CREATION_FAILED(Codes.MSG00002, "Error creating XML file"),
-    F09_ZIP_CREATION_FAILED(Codes.MSG00003, "Error creating ZIP file"),
+    F09_XML_OK(Codes.MSG00009, "Elaborazione OK"),
+    F09_XML_CREATION_FAILED(Codes.MSG00002, "ERRORE nella creazione del file XML"),
+    F09_ZIP_CREATION_FAILED(Codes.MSG00003, "ERRORE nella creazione del file ZIP\n"),
 
     // F10 - inviaEdizione
     F10_UPLOAD_EXECUTED(Codes.MSG00009, "<MSG> DAM upload executed"),
@@ -70,7 +84,7 @@ public enum GdpMessage {
 
     // F21 - attivaCODA
     F21_MAX_RETRIES(Codes.MSG00001, "ATTENZIONE! Superato il numero massimo di tentativi ammessi");
-    
+
     public static class Codes {
         public static final String MSG00001 = "MSG00001";
         public static final String MSG00002 = "MSG00002";

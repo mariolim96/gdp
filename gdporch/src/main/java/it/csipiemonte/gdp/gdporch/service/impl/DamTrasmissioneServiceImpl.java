@@ -11,16 +11,21 @@ import it.csipiemonte.gdp.gdporch.model.repository.GdpEdizioneRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpPaginaRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpLogEdizioneRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpCodaCaricamentoRepository;
+import it.csipiemonte.gdp.gdporch.model.xml.EdizioneXml;
+import it.csipiemonte.gdp.gdporch.model.xml.EdizioneXmlMapper;
 import it.csipiemonte.gdp.gdporch.model.enums.StatoCodaCaricamento;
 import it.csipiemonte.gdp.gdporch.exception.GdpMessage;
 import it.csipiemonte.gdp.gdporch.service.DamTrasmissioneService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Marshaller;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,6 +61,9 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
     @Inject
     GdpCodaCaricamentoRepository codaCaricamentoRepository;
 
+    @Inject
+    EdizioneXmlMapper edizioneXmlMapper;
+
     @Override
     @Transactional
     public XmlCreationResponse creaXMLEdizione(Integer idTestata, Integer idLog, Integer idEdizione, Integer priorita) {
@@ -74,12 +82,25 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
                 return response;
             }
 
+            // Update GDP_LOG_EDIZIONE & Get Path
+            Optional<GdpLogEdizione> logEdOpt = logEdizioneRepository.find("fkGdpEdizione", idEdizione)
+                    .firstResultOptional();
+            
+            if (logEdOpt.isEmpty()) {
+                response.setCodice(GdpMessage.F_NOT_FOUND.getCodice());
+                response.setMessaggio("Log edizione non trovato per idEdizione: " + idEdizione);
+                return response;
+            }
+
+            GdpLogEdizione logEd = logEdOpt.get();
+            String pathEdizione = logEd.pathEdizione;
+
             // Generate XML
             String xmlContent = generateXml(testata, edizione, pagine);
             String zipName = String.format("%s.%s.zip", testata.cartellaTestata, edizione.dataEdizione.toString());
 
-            // Files to ZIP (staged in _tmp)
-            Path sourceDir = Paths.get(tmpPrefix, testata.cartellaTestata, edizione.dataEdizione.toString());
+            // Files to ZIP (staged in pathEdizione from DB)
+            Path sourceDir = Paths.get(pathEdizione);
             Path destZip = Paths.get(damPrefix, zipName);
 
             if (!Files.exists(Paths.get(damPrefix))) {
@@ -135,21 +156,21 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
         return response;
     }
 
+
     private String generateXml(GdpTestata t, GdpEdizione e, List<GdpPagina> pagine) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        sb.append("<gdp_import>\n");
-        sb.append("  <testata id=\"").append(t.id).append("\" nome=\"").append(t.nomeTestata).append("\"/>\n");
-        sb.append("  <edizione data=\"").append(e.dataEdizione).append("\" pagine=\"").append(e.totalePagine)
-                .append("\"/>\n");
-        sb.append("  <pagine>\n");
-        for (GdpPagina p : pagine) {
-            sb.append("    <pagina numero=\"").append(p.numPagina).append("\" file=\"").append(p.filePdf)
-                    .append("\"/>\n");
+        try {
+            EdizioneXml model = edizioneXmlMapper.toEdizioneXml(t, e, pagine);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            JAXBContext context = JAXBContext.newInstance(EdizioneXml.class);
+            Marshaller marshaller = context.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+            marshaller.marshal(model, baos);
+            return baos.toString(StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            LOG.error("Errore Marshalling JAXB", ex);
+            throw new RuntimeException("Errore generazione XML", ex);
         }
-        sb.append("  </pagine>\n");
-        sb.append("</gdp_import>");
-        return sb.toString();
     }
 
     private void addFileToZip(ZipOutputStream zos, Path filePath) throws IOException {
@@ -160,4 +181,13 @@ public class DamTrasmissioneServiceImpl implements DamTrasmissioneService {
         Files.copy(filePath, zos);
         zos.closeEntry();
     }
+
+
+    @Override
+    public void inviaEdizioneAsync(Integer idLog, Integer idEdizione, String nomeFileCompresso) {
+        LOG.infof("F10 - Richiesta invio asincrono ricevuta per Log: %d, Edizione: %d, File: %s",
+                idLog, idEdizione, nomeFileCompresso);
+        // Qui in futuro potresti aggiungere l'annotazione @Asynchronous
+    }
+
 }

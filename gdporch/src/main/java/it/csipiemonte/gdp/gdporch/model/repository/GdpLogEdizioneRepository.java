@@ -13,7 +13,12 @@ public class GdpLogEdizioneRepository implements PanacheRepositoryBase<GdpLogEdi
         return list("fkGdpLog", fkGdpLog);
     }
 
+    public long countByLog(Integer fkGdpLog) {
+        return count("fkGdpLog", fkGdpLog);
+    }
+
     public Optional<GdpLogEdizione> findByEdizione(Integer fkGdpEdizione) {
         return find("fkGdpEdizione", fkGdpEdizione).firstResultOptional();
     }
+
 }

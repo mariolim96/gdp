@@ -5,27 +5,38 @@ import it.csipiemonte.gdp.gdporch.dto.EdizioneInsertResponse;
 import it.csipiemonte.gdp.gdporch.dto.GenericProcessResponse;
 import it.csipiemonte.gdp.gdporch.dto.XmlCreationRequest;
 import it.csipiemonte.gdp.gdporch.dto.XmlCreationResponse;
+import it.csipiemonte.gdp.gdporch.model.entity.GdpEdizione;
+import it.csipiemonte.gdp.gdporch.model.entity.GdpLogEdizione;
+import it.csipiemonte.gdp.gdporch.model.repository.GdpEdizioneRepository;
+import it.csipiemonte.gdp.gdporch.model.repository.GdpLogEdizioneRepository;
 import it.csipiemonte.gdp.gdporch.service.DamTrasmissioneService;
 import it.csipiemonte.gdp.gdporch.service.GdpCtrlEdizioneAcquisitaService;
 import it.csipiemonte.gdp.gdporch.service.GdpEdizioneService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDate;
+import java.util.Optional;
 
 public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
 
     private final GdpCtrlEdizioneAcquisitaService ctrlEdizioneAcquisitaService;
     private final GdpEdizioneService edizioneService;
     private final DamTrasmissioneService trasmissionService;
+    private final GdpLogEdizioneRepository  gdpLogEdizioneRepository;
+    private final GdpEdizioneRepository edizioneRepository;
 
     @Inject
     public GdpCtrlEdizioneAcquisitaResource(
             GdpCtrlEdizioneAcquisitaService ctrlEdizioneAcquisitaService,
             GdpEdizioneService edizioneService,
-            DamTrasmissioneService trasmissionService) {
+            DamTrasmissioneService trasmissionService,
+            GdpLogEdizioneRepository gdpLogEdizioneRepository,
+            GdpEdizioneRepository edizioneRepository) {
         this.ctrlEdizioneAcquisitaService = ctrlEdizioneAcquisitaService;
         this.edizioneService = edizioneService;
         this.trasmissionService = trasmissionService;
+        this.gdpLogEdizioneRepository = gdpLogEdizioneRepository;
+        this.edizioneRepository = edizioneRepository;
     }
 
     @Override
@@ -44,9 +55,17 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
     }
 
     @Override
-    public Response orchInternalCreaXML(Integer idTestata, Integer idEdizione, XmlCreationRequest xmlCreationRequest) {
-        XmlCreationResponse result = trasmissionService.creaXMLEdizione(idTestata, xmlCreationRequest.getIdLog(), idEdizione, 
-                xmlCreationRequest.getPriorita() != null ? xmlCreationRequest.getPriorita().value() : 0);
+    public Response orchInternalCreaXML(XmlCreationRequest req) {
+        // Find idEdizione from testata and date as it's missing from the request body in OpenAPI spec
+        var edizione = edizioneRepository.findByTestataAndData(req.getIdTestata(), req.getDataEdizione())
+                .orElseThrow(() -> new jakarta.ws.rs.WebApplicationException("Edizione non trovata", 404));
+
+        XmlCreationResponse result = trasmissionService.creaXMLEdizione(
+                req.getIdTestata(), 
+                req.getIdLog(), 
+                edizione.id, 
+                req.getPriorita().value()
+        );
         return Response.ok(result).build();
     }
 }

@@ -33,7 +33,7 @@ public class GdpLogEdizione extends PanacheEntityBase {
     @Column(name = "TIPO_EDIZIONE", length = 64)
     public TipoEdizione tipoEdizione;
 
-    @Column(name = "FK_GDP_EDIZIONE", nullable = false)
+    @Column(name = "FK_GDP_EDIZIONE", nullable = true)
     public Integer fkGdpEdizione;
 
     @Column(name = "PATH_EDIZIONE", length = 256)
