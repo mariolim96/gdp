@@ -116,7 +116,7 @@ public class GdpCtrlEdizioniStoricheServiceTest {
         XmlCreationResponse res09 = new XmlCreationResponse();
         res09.setCodice(it.csipiemonte.gdp.gdporch.exception.GdpMessage.F_OK.getCodice()); // Esempio di codice OK
         res09.setNomeFileCompresso("test_storico.zip");
-        when(damTrasmissioneService.creaXMLEdizione(any(), any(), any(), any())).thenReturn(res09);
+        when(damTrasmissioneService.creaXMLEdizione(any(), any(), any(), any(), anyString())).thenReturn(res09);
 
 
 
