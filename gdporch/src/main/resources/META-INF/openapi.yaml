@@ -802,7 +802,7 @@ components:
       required:
         - idTestata
         - idLog
-        - dataEdizione
+        - idEdizione
         - priorita
       properties:
         idTestata:
@@ -814,8 +814,8 @@ components:
           format: int32
           description: ID of the GdpLog record
         dataEdizione:
-          type: string
-          format: date
+          type: integer
+          format: int32
           description: Date of the edition (yyyy-mm-dd)
         priorita:
           type: integer
