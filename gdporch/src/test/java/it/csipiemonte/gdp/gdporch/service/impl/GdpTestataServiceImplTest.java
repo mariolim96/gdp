@@ -6,10 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import it.csipiemonte.gdp.gdporch.dto.TestataDetail;
 import it.csipiemonte.gdp.gdporch.dto.TestataSummaryList;
 import it.csipiemonte.gdp.gdporch.exception.GdpException;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpTestata;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpTestataRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -130,6 +133,73 @@ class GdpTestataServiceImplTest {
         assertEquals(7, result.getTestate().get(0).getIdTestata());
 
         verify(gdpTestataRepository).findById(7);
+    }
+
+    @Test
+    void getTestataByIdRestituisceDettaglioCompleto() {
+        // Obiettivo (TB-F17-I01):
+        // - verificare che il dettaglio testata venga mappato su tutti i campi
+        // principali
+        // del DTO generato TestataDetail.
+        // Dipendenze usate:
+        // - gdpTestataRepository.findById(idTestata) mockato con record completo.
+        GdpTestata testata = new GdpTestata();
+        testata.id = 1;
+        testata.nomeTestata = "La Sentinella del Canavese";
+        testata.cartellaTestata = "sentinella";
+        testata.invioEdizione = true;
+        testata.stato = 0;
+        testata.dataStato = LocalDate.of(2026, 3, 1);
+        testata.cancellazione = null;
+        testata.codTema = 12;
+        testata.tema = "Cultura";
+        testata.socEditrice = "Editrice Test";
+        testata.enteProponente = "Ente Test";
+        testata.annoFondazione = 1980;
+        testata.periodoFreq = "Settimanale";
+        testata.periodoGg = "Lun";
+        testata.descrizione = "Descrizione di test";
+        testata.www = "www.sentinella.test";
+        testata.mail = "redazione@sentinella.test";
+        testata.provincia = "TO";
+        testata.comune = "Torino";
+        testata.indirizzo = "Via Roma 1";
+        testata.cap = "10100";
+        testata.longitudine = new BigDecimal("7.6869");
+        testata.latitudine = new BigDecimal("45.0703");
+
+        when(gdpTestataRepository.findById(1)).thenReturn(testata);
+
+        TestataDetail result = service.getTestataById(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.getIdTestata());
+        assertEquals("La Sentinella del Canavese", result.getNomeTestata());
+        assertEquals("sentinella", result.getCartellaTestata());
+        assertEquals(true, result.getInvioEdizione());
+        assertEquals("TO", result.getProvincia());
+        assertEquals("Cultura", result.getTema());
+        assertEquals("redazione@sentinella.test", result.getMail());
+        assertEquals("http://www.sentinella.test", result.getSitoWeb().toString());
+        assertEquals(45.0703, result.getLatitudine());
+        assertEquals(7.6869, result.getLongitudine());
+
+        verify(gdpTestataRepository).findById(1);
+    }
+
+    @Test
+    void getTestataByIdIdInesistenteLanciaEccezione() {
+        // Obiettivo (TB-F17-I02, coerente con implementazione corrente):
+        // - verificare che id testata inesistente produca eccezione business.
+        // Dipendenze usate:
+        // - gdpTestataRepository.findById(idTestata) mockato con null.
+        when(gdpTestataRepository.findById(999)).thenReturn(null);
+
+        GdpException exception = assertThrows(GdpException.class, () -> service.getTestataById(999));
+
+        // F17_NOT_FOUND nella codebase corrente usa MSG00002.
+        assertEquals("MSG00002", exception.getCodice());
+        assertEquals("Testata non trovata", exception.getMessage());
     }
 
     private static GdpTestata testata(Integer id, String nome, String cartella, Boolean invioEdizione,
