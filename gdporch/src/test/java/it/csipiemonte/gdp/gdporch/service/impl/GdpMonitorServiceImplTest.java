@@ -1,11 +1,15 @@
 package it.csipiemonte.gdp.gdporch.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import it.csipiemonte.gdp.gdporch.dto.AcquisizioneList;
 import it.csipiemonte.gdp.gdporch.dto.AcquisizioneDetail;
 import it.csipiemonte.gdp.gdporch.exception.GdpException;
+import it.csipiemonte.gdp.gdporch.exception.GdpMessage;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpEdizione;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpLog;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpLogEdizione;
@@ -18,6 +22,8 @@ import it.csipiemonte.gdp.gdporch.model.repository.GdpLogRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpTestataRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +48,7 @@ class GdpMonitorServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        // Inizializza i mock repository e inietta le dipendenze nel service sotto test.
         MockitoAnnotations.openMocks(this);
         service = new GdpMonitorServiceImpl();
         service.logRepository = logRepository;
@@ -51,7 +58,137 @@ class GdpMonitorServiceImplTest {
     }
 
     @Test
+    void elencoAcquisizioniRestituisceRisultatiPerDataETipo() {
+        // Obiettivo (TB-F12-I01):
+        // - verificare che F12 ritorni acquisizioni per data/tipo con mapping campi
+        // principali.
+        // Dipendenze usate:
+        // - logRepository.findByTipoAcquisizioneAndDataAcquisizione
+        // - testataRepository.findById
+        // - logEdizioneRepository.findByLog
+        // - edizioneRepository.findById
+        LocalDate dataAcquisizione = LocalDate.of(2026, 3, 20);
+
+        GdpLog log = new GdpLog();
+        log.id = 101;
+        log.fkGdpUtenteFtp = 7;
+        log.fkGdpTestata = 1;
+        log.tipoAcquisizione = TipoAcquisizione.G;
+        log.dataAcquisizione = LocalDateTime.of(2026, 3, 20, 8, 30);
+        log.totaleFileAcquisiti = 12;
+        log.esito = "MSG00009";
+
+        GdpTestata testata = new GdpTestata();
+        testata.id = 1;
+        testata.nomeTestata = "La Sentinella";
+
+        GdpLogEdizione logEdizione = new GdpLogEdizione();
+        logEdizione.fkGdpLog = 101;
+        logEdizione.fkGdpEdizione = 501;
+        logEdizione.tipoEdizione = TipoEdizione.OK;
+
+        GdpEdizione edizione = new GdpEdizione();
+        edizione.id = 501;
+        edizione.dataEdizione = LocalDate.of(2026, 3, 19);
+
+        when(logRepository.findByTipoAcquisizioneAndDataAcquisizione(TipoAcquisizione.G, dataAcquisizione))
+                .thenReturn(List.of(log));
+        when(testataRepository.findById(1)).thenReturn(testata);
+        when(logEdizioneRepository.findByLog(101)).thenReturn(List.of(logEdizione));
+        when(edizioneRepository.findById(501)).thenReturn(edizione);
+
+        AcquisizioneList response = service.elencoAcquisizioni("G", dataAcquisizione);
+
+        assertNotNull(response);
+        assertEquals(GdpMessage.F_OK.getCodice(), response.getCodice());
+        assertEquals(1, response.getAcquisizioni().size());
+        assertEquals(101, response.getAcquisizioni().get(0).getIdLog());
+        assertEquals("La Sentinella", response.getAcquisizioni().get(0).getNomeTestata());
+        assertEquals("Regolare (Corrispondente)", response.getAcquisizioni().get(0).getTipoEdizione());
+        assertEquals(1, response.getAcquisizioni().get(0).getNroEdizioni());
+        assertEquals(
+                java.util.Date.from(log.dataAcquisizione.atZone(ZoneId.systemDefault()).toInstant()),
+                response.getAcquisizioni().get(0).getDataAcquisizione());
+    }
+
+    @Test
+    void elencoAcquisizioniStoricaCalcolaNroEdizioniDaCountByLog() {
+        // Obiettivo (TB-F12-I02):
+        // - per tipo storico (S), verificare che nroEdizioni usi countByLog invece del
+        // valore fisso 1.
+        // Dipendenze usate:
+        // - logRepository.findByTipoAcquisizioneAndDataAcquisizione
+        // - logEdizioneRepository.countByLog
+        LocalDate dataAcquisizione = LocalDate.of(2026, 3, 21);
+
+        GdpLog log = new GdpLog();
+        log.id = 202;
+        log.fkGdpUtenteFtp = 9;
+        log.fkGdpTestata = 2;
+        log.tipoAcquisizione = TipoAcquisizione.S;
+        log.dataAcquisizione = LocalDateTime.of(2026, 3, 21, 9, 0);
+        log.totaleFileAcquisiti = 5;
+        log.esito = "MSG00009";
+
+        GdpTestata testata = new GdpTestata();
+        testata.id = 2;
+        testata.nomeTestata = "Storico Test";
+
+        GdpLogEdizione logEdizione = new GdpLogEdizione();
+        logEdizione.fkGdpLog = 202;
+        logEdizione.fkGdpEdizione = 601;
+        logEdizione.tipoEdizione = TipoEdizione.ST;
+
+        GdpEdizione edizione = new GdpEdizione();
+        edizione.id = 601;
+        edizione.dataEdizione = LocalDate.of(2026, 3, 20);
+
+        when(logRepository.findByTipoAcquisizioneAndDataAcquisizione(TipoAcquisizione.S, dataAcquisizione))
+                .thenReturn(List.of(log));
+        when(testataRepository.findById(2)).thenReturn(testata);
+        when(logEdizioneRepository.findByLog(202)).thenReturn(List.of(logEdizione));
+        when(logEdizioneRepository.countByLog(202)).thenReturn(3L);
+        when(edizioneRepository.findById(601)).thenReturn(edizione);
+
+        AcquisizioneList response = service.elencoAcquisizioni("S", dataAcquisizione);
+
+        assertEquals(1, response.getAcquisizioni().size());
+        assertEquals(3, response.getAcquisizioni().get(0).getNroEdizioni());
+        verify(logEdizioneRepository).countByLog(202);
+    }
+
+    @Test
+    void elencoAcquisizioniLanciaEccezioneSeTipoNonValidoONessunDato() {
+        // Obiettivo:
+        // - validare i due error path F12: tipo non valido e nessun risultato.
+        // Dipendenze usate:
+        // - logRepository.findByTipoAcquisizioneAndDataAcquisizione solo nel secondo
+        // scenario.
+        LocalDate dataAcquisizione = LocalDate.of(2026, 3, 22);
+
+        GdpException invalidType = assertThrows(GdpException.class,
+                () -> service.elencoAcquisizioni("X", dataAcquisizione));
+        assertEquals("MSG00001", invalidType.getCodice());
+
+        when(logRepository.findByTipoAcquisizioneAndDataAcquisizione(TipoAcquisizione.G, dataAcquisizione))
+                .thenReturn(Collections.emptyList());
+
+        GdpException noData = assertThrows(GdpException.class,
+                () -> service.elencoAcquisizioni("G", dataAcquisizione));
+        assertEquals("MSG00001", noData.getCodice());
+        assertEquals(GdpMessage.F12_MONITOR_ERROR.getDescrizioneDefault(), noData.getMessage());
+    }
+
+    @Test
     void dettaglioAcquisizioneUsaLogEdizioneConFkEdizioneValorizzata() {
+        // Obiettivo (F13):
+        // - scegliere una log-edizione con fkGdpEdizione valorizzato anche se la prima
+        // riga non lo ha.
+        // Dipendenze usate:
+        // - logRepository.findById
+        // - logEdizioneRepository.findByLog
+        // - testataRepository.findById
+        // - edizioneRepository.findById
         GdpLog log = new GdpLog();
         log.id = 77;
         log.fkGdpTestata = 9;
@@ -99,6 +236,10 @@ class GdpMonitorServiceImplTest {
 
     @Test
     void dettaglioAcquisizioneLanciaEccezioneSeLogInesistente() {
+        // Obiettivo (F13):
+        // - verificare errore business con dettaglio causa quando GDP_LOG non esiste.
+        // Dipendenze usate:
+        // - logRepository.findById mockato con null.
         when(logRepository.findById(123)).thenReturn(null);
 
         GdpException exception = assertThrows(GdpException.class, () -> service.dettaglioAcquisizione(123));
@@ -110,6 +251,14 @@ class GdpMonitorServiceImplTest {
 
     @Test
     void dettaglioAcquisizioneNonFallisceSeEdizioneMancante() {
+        // Obiettivo (F13):
+        // - il servizio non deve fallire se GDP_EDIZIONE non è trovata, ma restituire i
+        // dati disponibili.
+        // Dipendenze usate:
+        // - logRepository.findById
+        // - logEdizioneRepository.findByLog
+        // - testataRepository.findById
+        // - edizioneRepository.findById mockato con null.
         GdpLog log = new GdpLog();
         log.id = 90;
         log.fkGdpTestata = 3;
