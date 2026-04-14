@@ -76,7 +76,7 @@ public class GdpTestataRepository implements PanacheRepositoryBase<GdpTestata, I
                     .getResultList();
         }
     }
-
+    
     public List<GdpTestata> findByInvioEdizione(Boolean invioEdizione) {
         return list("invioEdizione", invioEdizione);
     }
