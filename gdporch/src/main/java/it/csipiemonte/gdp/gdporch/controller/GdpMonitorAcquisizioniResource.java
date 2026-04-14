@@ -12,7 +12,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDate;
 
-@Path("/bo/acquisizioni")
+@Path("/bo")
 @Produces(MediaType.APPLICATION_JSON)
 public class GdpMonitorAcquisizioniResource {
 
@@ -24,7 +24,7 @@ public class GdpMonitorAcquisizioniResource {
     }
 
     @GET
-    @Path("/ricerca")
+    @Path("/acquisizioni/ricerca")
     public Response ricercaAcquisizioni(
             @QueryParam("tipoAcquisizione") String tipoAcquisizione,
             @QueryParam("idTestata") Integer idTestata,

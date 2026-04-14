@@ -74,6 +74,7 @@ public enum GdpMessage {
 
     // F12 / F13 - monitor
     F12_MONITOR_ERROR(Codes.MSG00001, "Error retrieving monitoring data"),
+    F13_MONITOR_ERROR(Codes.MSG00001, "Problema nel recupero dei dati di monitoraggio"),
 
     // F14 - preparaMAIL / F22 - invioMAIL
     F14_MAIL_NOT_FOUND(Codes.MSG00001, "Email address not found"),
