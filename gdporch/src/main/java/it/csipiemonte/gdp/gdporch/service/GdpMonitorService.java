@@ -14,4 +14,13 @@ public interface GdpMonitorService {
      * @return list of acquisitions
      */
     AcquisizioneList elencoAcquisizioni(String tipoAcquisizione, LocalDate dataAcquisizione);
+
+
+    /*F21 MONITOR.attivaCODA
+     *@param idLog identificativo del log di trasmissione (richiesto da specifica)
+     * @param idLogEdizione identificativo specifico dell'edizione (indispensabile per univocità)
+     * @return Codice esito: MSG00009 (Successo) o MSG00001 (Superato limite tentativi)
+     */
+
+    String attivaCoda(Integer idLog,Integer idGdpEdizione);
 }
