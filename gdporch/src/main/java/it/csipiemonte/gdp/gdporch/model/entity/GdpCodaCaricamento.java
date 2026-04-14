@@ -11,7 +11,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,7 +24,7 @@ public class GdpCodaCaricamento extends PanacheEntityBase {
     public Integer id;
 
     @Column(name = "DT_INSERIM_IN_CODA", nullable = false)
-    public LocalDate dataInserimento;
+    public LocalDateTime dataInserimento;
 
     @Column(name = "FK_GDP_LOG_EDIZIONE", nullable = false)
     public Integer fkGdpLogEdizione;
