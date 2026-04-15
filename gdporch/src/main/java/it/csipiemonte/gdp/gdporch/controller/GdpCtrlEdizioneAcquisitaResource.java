@@ -6,7 +6,6 @@ import it.csipiemonte.gdp.gdporch.dto.GenericProcessResponse;
 import it.csipiemonte.gdp.gdporch.dto.XmlCreationRequest;
 import it.csipiemonte.gdp.gdporch.dto.XmlCreationResponse;
 import it.csipiemonte.gdp.gdporch.model.entity.GdpEdizione;
-import it.csipiemonte.gdp.gdporch.model.entity.GdpLogEdizione;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpEdizioneRepository;
 import it.csipiemonte.gdp.gdporch.model.repository.GdpLogEdizioneRepository;
 import it.csipiemonte.gdp.gdporch.service.DamTrasmissioneService;
@@ -15,7 +14,7 @@ import it.csipiemonte.gdp.gdporch.service.GdpEdizioneService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import java.time.LocalDate;
-import java.util.Optional;
+
 
 public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
 
@@ -57,7 +56,9 @@ public class GdpCtrlEdizioneAcquisitaResource implements ApiApi {
     @Override
     public Response orchInternalCreaXML(XmlCreationRequest req) {
         // Find idEdizione from testata and date as it's missing from the request body in OpenAPI spec
-        var edizione = edizioneRepository.findByTestataAndData(req.getIdTestata(), req.getDataEdizione())
+
+        GdpEdizione edizionePerData = edizioneRepository.findById(req.getDataEdizione());
+        var edizione = edizioneRepository.findByTestataAndData(req.getIdTestata(),edizionePerData.dataEdizione)
                 .orElseThrow(() -> new jakarta.ws.rs.WebApplicationException("Edizione non trovata", 404));
 
         XmlCreationResponse result = trasmissionService.creaXMLEdizione(

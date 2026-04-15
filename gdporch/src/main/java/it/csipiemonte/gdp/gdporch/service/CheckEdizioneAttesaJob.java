@@ -141,7 +141,7 @@ public class CheckEdizioneAttesaJob {
     // Step 2 - Elaborazione edizioni per singola testata
     // -------------------------------------------------------------------------
 
-    private void processaEdizioniPerTestata(ChannelSftp sftp, String nomeTestata) {
+    void processaEdizioniPerTestata(ChannelSftp sftp, String nomeTestata) {
         String pathTestata = sourceDir + "/" + nomeTestata;
         List<ChannelSftp.LsEntry> edizioniSftp = SftpUtils.leggiCartelle(sftp, pathTestata);
 
